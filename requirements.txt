@@ -1,0 +1,9 @@
+earthengine-api>=1.0
+geemap>=0.34
+eemont>=0.3
+pandas>=2.0
+streamlit>=1.35
+plotly>=5.20
+folium>=0.16
+python-dotenv>=1.0
+requests>=2.31
