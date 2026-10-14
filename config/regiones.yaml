@@ -1,0 +1,30 @@
+# Una región = una lista de provincias. `provincias: []` significa
+# "todo el país" (para cuando se quiera escalar más allá del piloto).
+# `deptos` (opcional): códigos INDEC de 5 dígitos para acotar la región dentro de
+# esas provincias. Los departamentos sin superficie de cultivo simplemente van a salir
+# con n_pixeles=0 en la extracción y quedan afuera del análisis solos,
+# así que no hace falta un filtro adicional acá.
+
+pampa-humeda:
+  nombre: "Pampa húmeda"
+  descripcion: "Núcleo sojero-triguero: Buenos Aires, Santa Fe, Córdoba"
+  provincias: ["Buenos Aires", "Santa Fe", "Córdoba"]
+
+argentina:
+  nombre: "Argentina"
+  descripcion: "Todo el país (fase 2, sin precomputar todavía)"
+  provincias: []
+
+# Regiones para cultivos fuera de la pampa húmeda (ver "region" en cultivos.yaml).
+# Descomentar junto con el cultivo y correr scripts/01_geometrias.py --region <id>.
+#
+# nea:
+#   nombre: "NEA"
+#   descripcion: "Algodón: Chaco, Formosa, Santiago del Estero y norte de Santa Fe"
+#   provincias: ["Chaco", "Formosa", "Santiago del Estero", "Santa Fe"]
+#
+# sudeste-bonaerense:
+#   nombre: "Sudeste bonaerense"
+#   descripcion: "Papa: Balcarce, General Pueyrredón, General Alvarado, Necochea y alrededores"
+#   provincias: ["Buenos Aires"]
+#   deptos: ["06063", "06280", "06357", "06581"]   # Balcarce, General Alvarado, General Pueyrredón, Necochea. VERIFICAR: sumar vecinos con papa en el MAGyP

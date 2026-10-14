@@ -214,5 +214,15 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Streamlit
-.streamlit/secrets.toml
+# Herramientas de agentes locales (Claude Code, Serena, etc.), no son parte del proyecto
+.agents/
+.claude/
+.serena/
+
+# MNC INTA por campaña (~190 MB c/u, se bajan de Zenodo)
+data/raw/mnc/
+
+# Datos pesados y regenerables
+data/raw/
+data/processed/hero_*.tif
+data/processed/series_exp/

@@ -1,0 +1,158 @@
+:root {
+	--bg: #faf9f6;
+	--surface: #ffffff;
+	--ink: #1b1f23;
+	--ink-2: #444b53;
+	--muted: #646c75;
+	--line: #e3e1db;
+	--acento: #1f5f3a;
+	--acento-claro: #e6f0e9;
+	--mala: #d03b3b;
+	--buena: #3987e5;
+	--normal: #d9d7d0;
+	--radio: 10px;
+	--ancho: 1180px;
+	--serif: 'Source Serif 4', Charter, 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+	--sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+	color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
+	-webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+	* {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--ink);
+	font: 400 1rem/1.6 var(--sans);
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--serif);
+	font-weight: 600;
+	line-height: 1.15;
+	margin: 0;
+	text-wrap: balance;
+}
+
+h1 {
+	font-size: clamp(2.1rem, 5vw, 3.4rem);
+	letter-spacing: -0.02em;
+}
+h2 {
+	font-size: clamp(1.6rem, 3.2vw, 2.1rem);
+	letter-spacing: -0.015em;
+}
+h3 {
+	font-size: 1.15rem;
+}
+
+p {
+	margin: 0;
+	text-wrap: pretty;
+}
+
+a {
+	color: var(--acento);
+	text-underline-offset: 3px;
+}
+
+:focus-visible {
+	outline: 3px solid var(--buena);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.contenedor {
+	max-width: var(--ancho);
+	margin: 0 auto;
+	padding: 0 clamp(1rem, 4vw, 2rem);
+}
+
+.seccion {
+	padding: clamp(3rem, 7vw, 5.5rem) 0;
+}
+
+.ojo {
+	font: 600 0.78rem/1 var(--sans);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--acento);
+}
+
+.lede {
+	font-size: clamp(1.05rem, 2vw, 1.25rem);
+	color: var(--ink-2);
+	max-width: 62ch;
+}
+
+.solo-lectores {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.tarjeta {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radio);
+}
+
+button,
+select,
+input {
+	font: inherit;
+	color: inherit;
+}
+
+.boton {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.7rem 1.1rem;
+	border: 1px solid var(--acento);
+	background: var(--acento);
+	color: #fff;
+	border-radius: 999px;
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: none;
+}
+.boton:hover {
+	background: #174a2d;
+}
+.boton.secundario {
+	background: transparent;
+	color: var(--acento);
+}
+.boton.secundario:hover {
+	background: var(--acento-claro);
+}
+.boton.chico {
+	padding: 0.45rem 0.8rem;
+	font-size: 0.9rem;
+}

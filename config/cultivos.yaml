@@ -1,0 +1,125 @@
+# Un cultivo = una entrada. Agregar un cultivo no toca código, solo esta
+# tabla (más verificar la máscara y el MAGyP; ver "Agregar un cultivo" en el README).
+#
+# Obligatorios (src/agro/config.py los valida al cargar):
+#   nombre            texto para el selector de la app.
+#   mes_inicio/mes_fin  ventana de campaña (mes calendario, 1-12), para asignar
+#                     fechas a campañas. cruza_anio: true si mes_fin < mes_inicio.
+#   ext_mes_inicio/ext_mes_fin  ventana de EXTRACCIÓN satelital (CDSE). Es la que
+#                     paga créditos: el costo crece con los meses. ext_mes_fin es
+#                     exclusivo (5 = hasta fin de abril). Si ext_mes_fin <=
+#                     ext_mes_inicio la ventana cruza el año.
+#   mnc_estacion      "verano" (MNC_ver{aa}.tif) o "invierno" (MNC_inv{aa}.tif).
+#                     Donde aa = año de siembra + 1 si cruza_anio, si no el año.
+#   mnc_clase         código (o lista) del cultivo en la leyenda del MNC del INTA.
+#   magyp_cultivo     nombre exacto en el CSV de estimaciones agrícolas del MAGyP.
+#
+# Opcionales:
+#   mnc_clase_campania  excepciones por campaña (año de siembra): la leyenda del
+#                     MNC cambia entre campañas. Verificar cada campaña en el .qml
+#                     de su registro de Zenodo.
+#   region            región de regiones.yaml donde se muestrea y extrae el cultivo
+#                     (por defecto pampa-humeda). Los scripts la toman de acá.
+#   tmax_calor        °C sobre los que un día cuenta como "de calor" (por defecto 32).
+#   notas             lista de limitaciones que se muestran en Metodología.
+#   worldcereal_clase solo lo usa gee.py (v1), para comparar con GEE más adelante.
+
+soja:
+  nombre: "Soja"
+  mes_inicio: 11
+  mes_fin: 5
+  ext_mes_inicio: 11     # ventana de extracción CDSE (el costo crece con la ventana)
+  ext_mes_fin: 6         # exclusivo: nov-may
+  cruza_anio: true
+  worldcereal_clase: temporarycrops
+  mnc_estacion: verano   # MNC INTA: MNC_ver{aa}.tif
+  mnc_clase: 11          # Soja (verificado en las leyendas de 2019/20 a 2024/25)
+  mnc_clase_campania:    # excepciones por campaña (año de siembra)
+    2018: [1, 2]         # MNC 2018/19 usa otra leyenda: 1 Soja 1ra, 2 CI-Soja (soja de segunda)
+  magyp_cultivo: "soja total"
+  notas:
+    - "El MNC de 2018/19 usa otra leyenda (soja de primera y de segunda); esa campaña es menos comparable."
+
+trigo:
+  nombre: "Trigo"
+  mes_inicio: 5
+  mes_fin: 12
+  ext_mes_inicio: 8      # ventana de extracción CDSE: ago-ene, para ver la senescencia y la cosecha (cebada vs trigo)
+  ext_mes_fin: 1         # exclusivo: ago-ene (cruza el año)
+  cruza_anio: false
+  worldcereal_clase: wintercereals
+  mnc_estacion: invierno # MNC INTA: MNC_inv{aa}.tif
+  mnc_clase: 16          # "Cereales de invierno" (incluye cebada: limitación a documentar)
+  mnc_clase_campania:    # excepciones por campaña (año de siembra); códigos según los informes del INTA
+    2018: [2, 3, 6]      # MNC 2018/19 es un mapa único (MNC_inv18.tif = enlace a MNC_ver19.tif): 6 CI sin cultivo de verano, 2 y 3 dobles cultivos con invierno
+    2019: 0              # 2019 y 2020: "Cereales de invierno" es la clase 0 (verificar contra el raster)
+    2020: 0
+  magyp_cultivo: "trigo total"
+  notas:
+    - 'El trigo del MNC es "cereales de invierno" e incluye cebada, avena y verdeos.'
+
+# ---------------------------------------------------------------------------
+# Cultivos futuros. Están comentados para que no aparezcan en la app hasta
+# tener datos. Para activar uno: descomentar, resolver cada "VERIFICAR" y
+# seguir el checklist del README. Clases del MNC 2024/25 tomadas de los .qml
+# de Zenodo (zenodo.org/records/17652712); los códigos cambian entre campañas.
+# ---------------------------------------------------------------------------
+
+# maiz:
+#   nombre: "Maíz"
+#   mes_inicio: 9
+#   mes_fin: 6
+#   ext_mes_inicio: 9      # ventana larga para cubrir siembra temprana (sep-oct) y tardía (dic):
+#   ext_mes_fin: 7         # unos 10 meses, ~2x los créditos de la soja
+#   cruza_anio: true
+#   mnc_estacion: verano
+#   mnc_clase: 10          # Maíz (MNC 2024/25). VERIFICAR el código en cada campaña
+#   magyp_cultivo: "maíz"  # VERIFICAR el nombre exacto en el CSV (puede ser "maiz total")
+#   notas:
+#     - "El maíz mezcla siembras tempranas y tardías, con curvas desfasadas ~2 meses: la mediana del departamento junta dos fenologías."
+#   # Mejora futura: separar temprano/tardío con el mapa de estacionalidad del MNC 2023/24 o k-means sobre la curva NDVI.
+
+# algodon:
+#   nombre: "Algodón"
+#   region: nea            # NO está en la pampa húmeda: agregar la región en regiones.yaml
+#   mes_inicio: 10
+#   mes_fin: 7
+#   ext_mes_inicio: 11
+#   ext_mes_fin: 7
+#   cruza_anio: true
+#   mnc_estacion: verano
+#   mnc_clase: 15          # Algodón (MNC 2024/25). VERIFICAR por campaña
+#   magyp_cultivo: "algodón"  # VERIFICAR el nombre exacto en el CSV
+#   notas:
+#     - "No hay antecedentes de teledetección para rendimiento de algodón a escala departamental en Argentina; resultado exploratorio."
+
+# papa:
+#   nombre: "Papa"
+#   region: sudeste-bonaerense  # agregar en regiones.yaml
+#   mes_inicio: 9
+#   mes_fin: 4
+#   ext_mes_inicio: 10
+#   ext_mes_fin: 4
+#   cruza_anio: true
+#   mnc_estacion: verano   # VERIFICAR: la papa (clase 26) aparece en el mapa de verano y en el de invierno
+#   mnc_clase: 26
+#   magyp_cultivo: "papa"  # VERIFICAR el nombre exacto en el CSV
+#   tmax_calor: 28         # VERIFICAR: la papa sufre estrés térmico antes que soja y trigo
+#   notas:
+#     - "Superficie chica y concentrada: la mayoría de los departamentos quedan con menos puntos que el mínimo y fuera del modelo."
+
+# arveja:
+#   nombre: "Arveja"
+#   mes_inicio: 6
+#   mes_fin: 11
+#   ext_mes_inicio: 7
+#   ext_mes_fin: 12
+#   cruza_anio: false
+#   mnc_estacion: invierno
+#   mnc_clase: 24          # Arveja (MNC 2024/25). VERIFICAR que exista en cada campaña
+#   magyp_cultivo: "arveja"  # VERIFICAR el nombre exacto en el CSV (el CSV la trae)
+
+# cebada: NO SE SUMA con el MNC. El MNC la junta con el trigo en "Cereales de
+# invierno" (clase 16) y con esa máscara no se pueden separar. Se retoma solo si
+# aparece una máscara que distinga trigo de cebada. El MAGyP sí trae cebada
+# (cervecera, forrajera y total).
