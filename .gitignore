@@ -226,3 +226,4 @@ data/raw/mnc/
 data/raw/
 data/processed/hero_*.tif
 data/processed/series_exp/
+.wrangler/
