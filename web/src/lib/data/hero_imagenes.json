@@ -1,0 +1,31 @@
+{
+ "depto_id": "06623",
+ "bbox": {
+  "west": -60.63026425910624,
+  "east": -60.41026425910624,
+  "south": -33.94094535689328,
+  "north": -33.760945356893274
+ },
+ "estiramiento": [
+  200.0,
+  1842.0
+ ],
+ "imagenes": [
+  {
+   "campania": "2022/2023",
+   "anio": 2023,
+   "centro": "2023-01-11",
+   "desde": "2022-12-20",
+   "hasta": "2023-02-02",
+   "archivo": "/img/pergamino_2023.webp"
+  },
+  {
+   "campania": "2023/2024",
+   "anio": 2024,
+   "centro": "2024-01-11",
+   "desde": "2023-12-20",
+   "hasta": "2024-02-02",
+   "archivo": "/img/pergamino_2024.webp"
+  }
+ ]
+}
