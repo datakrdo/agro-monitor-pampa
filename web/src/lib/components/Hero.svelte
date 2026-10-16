@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { monitor } from '../estado.svelte';
-	import { fechaDecada, fechaLarga, kgha, pct } from '../formato';
+	import { fechaDecada, formatos } from '../formato';
+	import { idioma } from '../i18n';
 	import type { HeroImagenes, Validacion } from '../datos';
 	import AntesDespues from './AntesDespues.svelte';
 
@@ -10,9 +11,16 @@
 	const hero = $derived(validacion.hero);
 	const mala = $derived(imagenes.imagenes[0]);
 	const normal = $derived(imagenes.imagenes[1]);
-	const mes = (iso: string) => fechaLarga(new Date(iso + 'T00:00:00Z'), false).split(' de ')[1];
+	const L = $derived(idioma());
+	const f = $derived(formatos(L));
+	const fecha = (iso: string) => new Date(iso + 'T00:00:00Z');
+	const mes = (iso: string) => f.nombreMes(fecha(iso));
 	const rango = (i: HeroImagenes['imagenes'][number]) =>
-		`${fechaLarga(new Date(i.desde + 'T00:00:00Z'), false)} al ${fechaLarga(new Date(i.hasta + 'T00:00:00Z'), false)} de ${i.anio}`;
+		L === 'en'
+			? `${f.fechaLarga(fecha(i.desde), false)} to ${f.fechaLarga(fecha(i.hasta), false)}, ${i.anio}`
+			: `${f.fechaLarga(fecha(i.desde), false)} al ${f.fechaLarga(fecha(i.hasta), false)} de ${i.anio}`;
+	const camp = (c: string) => c.replace('/20', '/');
+	const enMes = (iso: string, anio: number) => (L === 'en' ? `${mes(iso)} ${anio}` : `${mes(iso)} de ${anio}`);
 
 	function verSequia() {
 		const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -28,41 +36,72 @@
 <section class="hero">
 	<div class="contenedor rejilla">
 		<div class="texto">
-			<p class="ojo">Soja · Pampa húmeda · Sentinel-2</p>
-			<h1>¿Viene buena o mala la campaña de soja?</h1>
-			<p class="lede">
-				Un satélite mide cuánto verde tiene la soja de cada departamento y lo compara con su propia historia. Cuando una campaña viene más
-				pobre que otras, se nota meses antes de la cosecha.
-			</p>
-			<p class="dato">
-				<strong>{pct(sequia.deptos_en_rojo)}</strong>
-				<span>
-					de los departamentos ya estaba por debajo de lo normal el {fechaLarga(fechaDecada(sequia.campania, sequia.fecha))}. La campaña
-					{sequia.campania.replace('/20', '/')} cerró con rindes {pct(Math.abs(sequia.desvio_medio))} por debajo del promedio de cada
-					departamento.
-				</span>
-			</p>
-			<div class="acciones">
-				<button class="boton" onclick={verSequia}>Ver cómo se vio la sequía</button>
-				<a class="boton secundario" href="#funciona">¿Cuánto acierta?</a>
-			</div>
+			{#if L === 'en'}
+				<p class="ojo">Soybeans · Humid Pampas · Sentinel-2</p>
+				<h1>Is this soybean campaign going well or badly?</h1>
+				<p class="lede">
+					A satellite measures how green the soybeans are in each department and compares it with that department’s own history. When a campaign
+					is poorer than others, it shows months before harvest.
+				</p>
+				<p class="dato">
+					<strong>{f.pct(sequia.deptos_en_rojo)}</strong>
+					<span>
+						of departments were already below normal on {f.fechaLarga(fechaDecada(sequia.campania, sequia.fecha))}. The {camp(sequia.campania)} campaign
+						ended with yields {f.pct(Math.abs(sequia.desvio_medio))} below each department’s average.
+					</span>
+				</p>
+				<div class="acciones">
+					<button class="boton" onclick={verSequia}>See how the drought looked</button>
+					<a class="boton secundario" href="#funciona">How accurate is it?</a>
+				</div>
+			{:else}
+				<p class="ojo">Soja · Pampa húmeda · Sentinel-2</p>
+				<h1>¿Viene buena o mala la campaña de soja?</h1>
+				<p class="lede">
+					Un satélite mide cuánto verde tiene la soja de cada departamento y lo compara con su propia historia. Cuando una campaña viene más
+					pobre que otras, se nota meses antes de la cosecha.
+				</p>
+				<p class="dato">
+					<strong>{f.pct(sequia.deptos_en_rojo)}</strong>
+					<span>
+						de los departamentos ya estaba por debajo de lo normal el {f.fechaLarga(fechaDecada(sequia.campania, sequia.fecha))}. La campaña
+						{camp(sequia.campania)} cerró con rindes {f.pct(Math.abs(sequia.desvio_medio))} por debajo del promedio de cada
+						departamento.
+					</span>
+				</p>
+				<div class="acciones">
+					<button class="boton" onclick={verSequia}>Ver cómo se vio la sequía</button>
+					<a class="boton secundario" href="#funciona">¿Cuánto acierta?</a>
+				</div>
+			{/if}
 		</div>
 		<figure class="imagen">
 			<AntesDespues
 				antes={{
 					src: mala.archivo,
-					titulo: `${mes(mala.centro)} ${mala.anio} · sequía`,
-					alt: `Imagen satelital de campos de ${hero.depto} en ${mes(mala.centro)} de ${mala.anio}, con lotes de soja secos y pardos.`
+					titulo: `${mes(mala.centro)} ${mala.anio} · ${L === 'en' ? 'drought' : 'sequía'}`,
+					alt:
+						L === 'en'
+							? `Satellite image of fields in ${hero.depto} in ${enMes(mala.centro, mala.anio)}, with dry, brown soybean plots.`
+							: `Imagen satelital de campos de ${hero.depto} en ${enMes(mala.centro, mala.anio)}, con lotes de soja secos y pardos.`
 				}}
 				despues={{
 					src: normal.archivo,
 					titulo: `${mes(normal.centro)} ${normal.anio}`,
-					alt: `Los mismos campos de ${hero.depto} en ${mes(normal.centro)} de ${normal.anio}, con la soja verde y densa.`
+					alt:
+						L === 'en'
+							? `The same fields in ${hero.depto} in ${enMes(normal.centro, normal.anio)}, with green, dense soybeans.`
+							: `Los mismos campos de ${hero.depto} en ${enMes(normal.centro, normal.anio)}, con la soja verde y densa.`
 				}}
 			/>
 			<figcaption>
-				<strong>{hero.depto}, {hero.provincia}.</strong> Color real de Sentinel-2, mediana de ~30 días ({rango(mala)}, izquierda; {rango(normal)}, derecha).
-				Rinde oficial: {kgha(hero.rinde_mala)} en {hero.campania_mala.replace('/20', '/')} contra {kgha(hero.rinde_normal)} en {hero.campania_normal.replace('/20', '/')}.
+				<strong>{hero.depto}, {hero.provincia}.</strong>
+				{#if L === 'en'}
+					True-colour Sentinel-2, ~30-day median ({rango(mala)}, left; {rango(normal)}, right). Official yield: {f.kgha(hero.rinde_mala)} in {camp(hero.campania_mala)} versus {f.kgha(hero.rinde_normal)} in {camp(hero.campania_normal)}.
+				{:else}
+					Color real de Sentinel-2, mediana de ~30 días ({rango(mala)}, izquierda; {rango(normal)}, derecha).
+					Rinde oficial: {f.kgha(hero.rinde_mala)} en {camp(hero.campania_mala)} contra {f.kgha(hero.rinde_normal)} en {camp(hero.campania_normal)}.
+				{/if}
 			</figcaption>
 		</figure>
 	</div>

@@ -4,7 +4,8 @@
 	import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 	import type { ExpressionSpecification, Map as MapaMapLibre } from 'maplibre-gl';
 	import { COLOR, ETIQUETA, ICONO, type Clase } from '../clases';
-	import { anomaliaPct } from '../formato';
+	import { formatos } from '../formato';
+	import { idioma } from '../i18n';
 
 	interface Props {
 		geojson: FeatureCollection;
@@ -15,6 +16,18 @@
 	}
 	let { geojson, clases, nombres, seleccionado, onelegir }: Props = $props();
 
+	const L = $derived(idioma());
+	const T = {
+		es: {
+			ctrl: 'Usá Ctrl + scroll para hacer zoom en el mapa', cmd: 'Usá ⌘ + scroll para hacer zoom en el mapa', dedos: 'Usá dos dedos para mover el mapa',
+			aria: 'Mapa de departamentos coloreado según cómo viene la campaña. Hay una tabla equivalente debajo.', cargando: 'Cargando mapa…'
+		},
+		en: {
+			ctrl: 'Use Ctrl + scroll to zoom the map', cmd: 'Use ⌘ + scroll to zoom the map', dedos: 'Use two fingers to move the map',
+			aria: 'Map of departments coloured by how the campaign is going. An equivalent table is below.', cargando: 'Loading map…'
+		}
+	};
+	const t = $derived(T[L]);
 	const ESTILO = 'https://tiles.openfreemap.org/styles/positron';
 	const SIN_BASE = { version: 8 as const, sources: {}, layers: [{ id: 'fondo', type: 'background' as const, paint: { 'background-color': '#eceeea' } }] };
 	const FUENTE = 'deptos';
@@ -74,9 +87,9 @@
 				fitBoundsOptions: { padding: 12 },
 				cooperativeGestures: true,
 				locale: {
-					'CooperativeGesturesHandler.WindowsHelpText': 'Usá Ctrl + scroll para hacer zoom en el mapa',
-					'CooperativeGesturesHandler.MacHelpText': 'Usá ⌘ + scroll para hacer zoom en el mapa',
-					'CooperativeGesturesHandler.MobileHelpText': 'Usá dos dedos para mover el mapa'
+					'CooperativeGesturesHandler.WindowsHelpText': t.ctrl,
+					'CooperativeGesturesHandler.MacHelpText': t.cmd,
+					'CooperativeGesturesHandler.MobileHelpText': t.dedos
 				}
 			});
 			m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
@@ -117,7 +130,7 @@
 					p.textContent = `(${nombres[id]?.p ?? ''})`;
 					const linea = document.createElement('div');
 					const k = c?.clase ?? 'sin_dato';
-					linea.textContent = `${ICONO[k]} ${ETIQUETA[k]}${c && c.an !== null && k !== 'pocos' ? ` · ${anomaliaPct(c.an)}` : ''}`;
+					linea.textContent = `${ICONO[k]} ${ETIQUETA[L][k]}${c && c.an !== null && k !== 'pocos' ? ` · ${formatos(L).anomaliaPct(c.an)}` : ''}`;
 					el.append(t, p, linea);
 					aviso.setLngLat(e.lngLat).setDOMContent(el).addTo(m);
 				});
@@ -166,9 +179,9 @@
 	});
 </script>
 
-<div class="mapa" role="group" aria-label="Mapa de departamentos coloreado según cómo viene la campaña. Hay una tabla equivalente debajo.">
+<div class="mapa" role="group" aria-label={t.aria}>
 	<div bind:this={contenedor} class="lienzo"></div>
-	{#if !listo}<p class="cargando">Cargando mapa…</p>{/if}
+	{#if !listo}<p class="cargando">{t.cargando}</p>{/if}
 </div>
 
 <style>

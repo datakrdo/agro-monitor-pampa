@@ -1,13 +1,12 @@
 // Cómo se clasifica un departamento en el mapa. El umbral viene de monitor.json
 // (UMBRAL_ANOMALIA en src/agro/anomalia.py), nunca se escribe acá.
+import type { Idioma } from './i18n';
+
 export type Clase = 'mala' | 'normal' | 'buena' | 'pocos' | 'sin_dato';
 
-export const ETIQUETA: Record<Clase, string> = {
-	mala: 'Por debajo de lo normal',
-	normal: 'Normal',
-	buena: 'Por encima de lo normal',
-	pocos: 'Pocos datos',
-	sin_dato: 'Sin dato'
+export const ETIQUETA: Record<Idioma, Record<Clase, string>> = {
+	es: { mala: 'Por debajo de lo normal', normal: 'Normal', buena: 'Por encima de lo normal', pocos: 'Pocos datos', sin_dato: 'Sin dato' },
+	en: { mala: 'Below normal', normal: 'Normal', buena: 'Above normal', pocos: 'Little data', sin_dato: 'No data' }
 };
 export const ICONO: Record<Clase, string> = { mala: '▼', normal: '●', buena: '▲', pocos: '◌', sin_dato: '–' };
 // Azul y rojo con un gris neutro en el medio: el par sigue leyéndose bien con daltonismo rojo-verde.

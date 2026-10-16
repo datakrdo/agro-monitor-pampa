@@ -31,3 +31,25 @@ test('el gráfico de acierto y las tablas alternativas están', async ({ page })
 	await page.getByText('Ver los datos como tabla').click();
 	await expect(page.locator('#funciona table').first()).toBeVisible();
 });
+
+test('la versión en inglés y el toggle de idioma', async ({ page }) => {
+	await page.goto('/en/');
+	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('Is this soybean campaign going well or badly?');
+	await expect(page.locator('#monitor canvas.maplibregl-canvas')).toBeVisible({ timeout: 20_000 });
+	await expect(page.locator('#monitor .titular')).toContainText('Running');
+
+	await page.getByPlaceholder(/Search/).fill('Pergamino (Buenos Aires)');
+	await page.getByPlaceholder(/Search/).press('Enter');
+	await expect(page.locator('.panel h3')).toHaveText('Pergamino');
+
+	// El toggle conserva el departamento elegido y cambia el texto.
+	await page.getByRole('link', { name: 'ES', exact: true }).click();
+	await expect(page).toHaveURL(/\/$/);
+	await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('¿Viene buena o mala la campaña de soja?');
+	await expect(page.locator('.panel h3')).toHaveText('Pergamino');
+	await page.getByRole('link', { name: 'EN', exact: true }).click();
+	await expect(page).toHaveURL(/\/en\/$/);
+	await expect(page.locator('.panel h3')).toHaveText('Pergamino');
+});

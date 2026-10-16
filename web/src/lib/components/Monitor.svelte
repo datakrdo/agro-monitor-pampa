@@ -2,7 +2,8 @@
 	import { onMount } from 'svelte';
 	import { clasificar, COLOR, ETIQUETA, ICONO, veredicto, type Clase } from '../clases';
 	import { monitor } from '../estado.svelte';
-	import { anomaliaPct, fechaDecada, fechaLarga, mesCorto } from '../formato';
+	import { fechaDecada, formatos } from '../formato';
+	import { idioma } from '../i18n';
 	import type { FeatureCollection } from 'geojson';
 	import type { Monitor } from '../datos';
 	import Mapa from './Mapa.svelte';
@@ -10,7 +11,7 @@
 
 	let datos = $state<Monitor | null>(null);
 	let geojson = $state<FeatureCollection | null>(null);
-	let error = $state('');
+	let error = $state(false);
 	let tablaAbierta = $state(false);
 
 	onMount(async () => {
@@ -27,7 +28,7 @@
 				monitor.decada = m.decadas.length - 1;
 			}
 		} catch {
-			error = 'No se pudieron cargar los datos del mapa.';
+			error = true;
 		}
 	});
 
@@ -66,11 +67,27 @@
 			: []
 	);
 
-	const TITULO = {
-		mala: 'Viene por debajo de lo normal',
-		normal: 'Viene dentro de lo normal',
-		buena: 'Viene por encima de lo normal'
-	} as const;
+	const L = $derived(idioma());
+	const f = $derived(formatos(L));
+	const T = {
+		es: {
+			error: 'No se pudieron cargar los datos del mapa.', ojo: 'El monitor', h2: 'Cómo viene cada departamento frente a su propia historia',
+			lede: 'Elegí una campaña y mové la fecha: cada departamento se pinta según su verdor acumulado contra el de otras campañas a esa misma fecha.',
+			campania: 'Campaña', pausar: '❚❚ Pausar', reproducir: '▶ Reproducir', al: 'Al', depto: 'Departamento', buscar: 'Buscar, por ejemplo Pergamino',
+			leyenda: 'Leyenda del mapa', mas: (u: string) => ` (más de ${u}%)`, region: 'Ver toda la región', tabla: 'Ver el mapa como tabla',
+			cols: ['Departamento', 'Provincia', 'Estado', 'Anomalía'], cargando: 'Cargando datos…',
+			titulo: { mala: 'Viene por debajo de lo normal', normal: 'Viene dentro de lo normal', buena: 'Viene por encima de lo normal' }
+		},
+		en: {
+			error: 'The map data could not be loaded.', ojo: 'The monitor', h2: 'How each department is doing against its own history',
+			lede: 'Pick a campaign and move the date: each department is coloured by its accumulated greenness against that of other campaigns on the same date.',
+			campania: 'Campaign', pausar: '❚❚ Pause', reproducir: '▶ Play', al: 'On', depto: 'Department', buscar: 'Search, e.g. Pergamino',
+			leyenda: 'Map legend', mas: (u: string) => ` (more than ${u}%)`, region: 'View the whole region', tabla: 'View the map as a table',
+			cols: ['Department', 'Province', 'Status', 'Anomaly'], cargando: 'Loading data…',
+			titulo: { mala: 'Running below normal', normal: 'Running within normal', buena: 'Running above normal' }
+		}
+	};
+	const t = $derived(T[L]);
 
 	const opciones = $derived(datos ? Object.entries(datos.deptos).map(([id, d]) => ({ id, etiqueta: `${d.n} (${d.p})` })).sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es')) : []);
 	const filasTabla = $derived(
@@ -106,19 +123,17 @@
 <section id="monitor" class="seccion">
 	<div class="contenedor">
 		<header class="cabecera">
-			<p class="ojo">El monitor</p>
-			<h2>Cómo viene cada departamento frente a su propia historia</h2>
-			<p class="lede">
-				Elegí una campaña y mové la fecha: cada departamento se pinta según su verdor acumulado contra el de otras campañas a esa misma fecha.
-			</p>
+			<p class="ojo">{t.ojo}</p>
+			<h2>{t.h2}</h2>
+			<p class="lede">{t.lede}</p>
 		</header>
 
 		{#if error}
-			<p class="error" role="alert">{error}</p>
+			<p class="error" role="alert">{t.error}</p>
 		{:else if datos && geojson && fecha}
 			<div class="controles">
 				<label>
-					<span>Campaña</span>
+					<span>{t.campania}</span>
 					<select bind:value={monitor.campania} onchange={() => (monitor.reproduciendo = false)}>
 						{#each [...datos.campanias].reverse() as c (c)}
 							<option value={c}>{c}</option>
@@ -127,17 +142,17 @@
 				</label>
 				<div class="tiempo">
 					<button class="boton chico" onclick={reproducir} aria-pressed={monitor.reproduciendo}>
-						{monitor.reproduciendo ? '❚❚ Pausar' : '▶ Reproducir'}
+						{monitor.reproduciendo ? t.pausar : t.reproducir}
 					</button>
 					<label class="deslizador">
-						<span>Al <strong>{fechaLarga(fecha, false)}</strong></span>
+						<span>{t.al} <strong>{f.fechaLarga(fecha, false)}</strong></span>
 						<input type="range" min="0" max={n - 1} step="1" bind:value={monitor.decada} oninput={() => (monitor.reproduciendo = false)} />
-						<span class="extremos" aria-hidden="true"><span>{mesCorto(fechaDecada(monitor.campania, datos.decadas[0]))}</span><span>{mesCorto(fechaDecada(monitor.campania, datos.decadas[n - 1]))}</span></span>
+						<span class="extremos" aria-hidden="true"><span>{f.mesCorto(fechaDecada(monitor.campania, datos.decadas[0]))}</span><span>{f.mesCorto(fechaDecada(monitor.campania, datos.decadas[n - 1]))}</span></span>
 					</label>
 				</div>
 				<label class="buscar">
-					<span>Departamento</span>
-					<input list="deptos-lista" placeholder="Buscar, por ejemplo Pergamino" onchange={buscar} autocomplete="off" />
+					<span>{t.depto}</span>
+					<input list="deptos-lista" placeholder={t.buscar} onchange={buscar} autocomplete="off" />
 					<datalist id="deptos-lista">
 						{#each opciones as o (o.id)}<option value={o.etiqueta}></option>{/each}
 					</datalist>
@@ -146,11 +161,16 @@
 
 			<div class="veredicto" aria-live="polite">
 				{#if resumen.veredicto}
-					<p class="titular"><span class="icono" aria-hidden="true">{ICONO[resumen.veredicto]}</span> {TITULO[resumen.veredicto]}</p>
+					<p class="titular"><span class="icono" aria-hidden="true">{ICONO[resumen.veredicto]}</span> {t.titulo[resumen.veredicto]}</p>
 				{/if}
 				<p class="detalle">
-					Al {fechaLarga(fecha)}: {resumen.cuenta.mala} de {resumen.evaluados} departamentos por debajo de lo normal, {resumen.cuenta.normal} normales y
-					{resumen.cuenta.buena} por encima.
+					{#if L === 'en'}
+						On {f.fechaLarga(fecha)}: {resumen.cuenta.mala} of {resumen.evaluados} departments below normal, {resumen.cuenta.normal} normal and
+						{resumen.cuenta.buena} above.
+					{:else}
+						Al {f.fechaLarga(fecha)}: {resumen.cuenta.mala} de {resumen.evaluados} departamentos por debajo de lo normal, {resumen.cuenta.normal} normales y
+						{resumen.cuenta.buena} por encima.
+					{/if}
 				</p>
 			</div>
 
@@ -158,17 +178,17 @@
 				<div class="col-mapa">
 					<Mapa {geojson} {clases} nombres={datos.deptos} seleccionado={monitor.depto} onelegir={elegir} />
 					<div class="pie-mapa">
-						<ul class="leyenda" aria-label="Leyenda del mapa">
+						<ul class="leyenda" aria-label={t.leyenda}>
 							{#each ['mala', 'normal', 'buena', 'pocos'] as k (k)}
 								<li>
 									<span class="muestra" class:hachura={k === 'pocos'} style:background={k === 'pocos' ? undefined : COLOR[k as Clase]}></span>
 									<span aria-hidden="true">{ICONO[k as Clase]}</span>
-									{ETIQUETA[k as Clase]}{k === 'mala' || k === 'buena' ? ` (más de ${datos.umbral.toString().replace('.', ',')}%)` : ''}
+									{ETIQUETA[L][k as Clase]}{k === 'mala' || k === 'buena' ? t.mas(f.dec(datos.umbral)) : ''}
 								</li>
 							{/each}
 						</ul>
 						{#if monitor.depto}
-							<button class="boton secundario chico" onclick={() => (monitor.depto = null)}>Ver toda la región</button>
+							<button class="boton secundario chico" onclick={() => (monitor.depto = null)}>{t.region}</button>
 						{/if}
 					</div>
 				</div>
@@ -176,17 +196,17 @@
 			</div>
 
 			<details class="tabla" ontoggle={(e) => (tablaAbierta = (e.currentTarget as HTMLDetailsElement).open)}>
-				<summary>Ver el mapa como tabla</summary>
+				<summary>{t.tabla}</summary>
 				<div class="envoltura">
 					<table>
-						<thead><tr><th>Departamento</th><th>Provincia</th><th>Estado</th><th>Anomalía</th></tr></thead>
+						<thead><tr>{#each t.cols as c (c)}<th>{c}</th>{/each}</tr></thead>
 						<tbody>
-							{#each filasTabla as f (f.id)}
+							{#each filasTabla as r (r.id)}
 								<tr>
-									<td><button class="enlace" onclick={() => elegir(f.id)}>{f.n}</button></td>
-									<td>{f.p}</td>
-									<td>{ICONO[f.clase]} {ETIQUETA[f.clase]}</td>
-									<td>{f.an !== null && f.clase !== 'pocos' ? anomaliaPct(f.an) : '–'}</td>
+									<td><button class="enlace" onclick={() => elegir(r.id)}>{r.n}</button></td>
+									<td>{r.p}</td>
+									<td>{ICONO[r.clase]} {ETIQUETA[L][r.clase]}</td>
+									<td>{r.an !== null && r.clase !== 'pocos' ? f.anomaliaPct(r.an) : '–'}</td>
 								</tr>
 							{/each}
 						</tbody>
@@ -194,7 +214,7 @@
 				</div>
 			</details>
 		{:else}
-			<div class="esqueleto" aria-busy="true">Cargando datos…</div>
+			<div class="esqueleto" aria-busy="true">{t.cargando}</div>
 		{/if}
 	</div>
 </section>

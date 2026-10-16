@@ -9,13 +9,13 @@ An in-season monitor for Argentina's humid Pampas (152 soybean departments in Bu
 - **Anomaly to date** (early warning, useful for insurers and banks): biomass accumulated so far against the same date in previous campaigns of the same department.
 - **Estimated yield with its out-of-sample error** (useful for traders and consultancies): a leave-one-campaign-out validated model, always compared against an honest baseline.
 
-**[Live demo →](https://agro-monitor-pampa.pages.dev)** _(deploy pending: see [Phases](#phases-))_
+**[Live demo →](https://agro-monitor-pampa.pages.dev)** · [English version](https://agro-monitor-pampa.pages.dev/en/) · [versión en español](https://agro-monitor-pampa.pages.dev)
 
 ## Tools 🛠️
 
 - Python, pandas, scikit-learn (Ridge and gradient boosting, leave-one-campaign-out validation), SciPy, rasterio, geopandas
 - openEO on Copernicus Data Space (Sentinel-2 L2A), Open-Meteo (ERA5), INTA MNC and MAGyP as sources
-- SvelteKit 2 + Svelte 5, MapLibre GL, Observable Plot, vitest and Playwright
+- SvelteKit 3 + Svelte 5, MapLibre GL, Observable Plot, vitest and Playwright
 - uv, ruff, pytest, GitHub Actions, Cloudflare Pages
 
 ## Skills 🧠

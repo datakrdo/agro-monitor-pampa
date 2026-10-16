@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { COLOR, ETIQUETA, ICONO, type Clase } from '../clases';
-	import { anomaliaPct, fechaDecada, fechaLarga, kgha, pct } from '../formato';
+	import { fechaDecada, formatos } from '../formato';
+	import { idioma } from '../i18n';
 	import type { Monitor } from '../datos';
 	import CurvaNdvi from './CurvaNdvi.svelte';
 
@@ -15,14 +16,39 @@
 	}
 	let { datos, depto, campania, decada, clase, destacados, onelegir }: Props = $props();
 
+	const L = $derived(idioma());
+	const f = $derived(formatos(L));
+	const T = {
+		es: {
+			depto: 'Departamento', h3: 'Elegí uno en el mapa', p: 'O buscalo por nombre. Vas a ver cómo viene su curva de verdor frente a la de otras campañas y cuánto rindió.',
+			destacados: 'Los que más se alejan de lo normal a esta fecha', pocos: (n: number) => `Hay menos de ${n} píxeles de soja en esta campaña: el dato es poco confiable.`,
+			frente: (a: string, d: string) => `${a} frente a lo habitual al ${d}.`, sinOtras: 'No hay otras campañas contra las que comparar.',
+			base: 'Promedio histórico del departamento', modelo: 'Estimación del modelo', oficial: 'Oficial (MAGyP)',
+			rinde: (c: string) => `Rinde al cierre de la campaña ${c}`,
+			notaOficial: (a: string) => `La estimación usa la campaña completa y se calculó sin conocer el rinde de esta campaña. Oficial contra el promedio histórico: ${a}.`,
+			notaProv: (a: string) => `Estimación provisoria: el MAGyP todavía no publicó el rinde oficial de esta campaña. Estimado contra el promedio histórico: ${a}.`,
+			tabla: 'Ver los datos de la curva como tabla', cols: ['Década', 'Esta campaña', 'Anomalía']
+		},
+		en: {
+			depto: 'Department', h3: 'Pick one on the map', p: 'Or search it by name. You will see how its greenness curve compares with other campaigns and how much it yielded.',
+			destacados: 'Furthest from normal on this date', pocos: (n: number) => `Fewer than ${n} soybean pixels in this campaign: the data is not very reliable.`,
+			frente: (a: string, d: string) => `${a} versus usual on ${d}.`, sinOtras: 'There are no other campaigns to compare against.',
+			base: 'Department historical average', modelo: 'Model estimate', oficial: 'Official (MAGyP)',
+			rinde: (c: string) => `Yield at the end of the ${c} campaign`,
+			notaOficial: (a: string) => `The estimate uses the full campaign and was computed without knowing this campaign’s yield. Official versus historical average: ${a}.`,
+			notaProv: (a: string) => `Provisional estimate: MAGyP has not yet published this campaign’s official yield. Estimated versus historical average: ${a}.`,
+			tabla: 'View the curve data as a table', cols: ['Period', 'This campaign', 'Anomaly']
+		}
+	};
+	const t = $derived(T[L]);
 	const serie = $derived(depto ? datos.series[campania]?.[depto] : undefined);
 	const k = $derived(clase?.clase ?? 'sin_dato');
 	const cierre = $derived(
 		serie?.base != null && serie.pred != null
 			? [
-					{ nombre: 'Promedio histórico del departamento', valor: serie.base, tono: 'base' },
-					{ nombre: 'Estimación del modelo', valor: serie.pred, tono: 'modelo' },
-					...(serie.y != null ? [{ nombre: 'Oficial (MAGyP)', valor: serie.y, tono: 'oficial' }] : [])
+					{ nombre: t.base, valor: serie.base, tono: 'base' },
+					{ nombre: t.modelo, valor: serie.pred, tono: 'modelo' },
+					...(serie.y != null ? [{ nombre: t.oficial, valor: serie.y, tono: 'oficial' }] : [])
 				]
 			: null
 	);
@@ -34,21 +60,21 @@
 <aside class="panel tarjeta" aria-live="polite">
 	{#if !depto || !serie}
 		<div class="vacio">
-			<p class="ojo">Departamento</p>
-			<h3>Elegí uno en el mapa</h3>
-			<p>O buscalo por nombre. Vas a ver cómo viene su curva de verdor frente a la de otras campañas y cuánto rindió.</p>
+			<p class="ojo">{t.depto}</p>
+			<h3>{t.h3}</h3>
+			<p>{t.p}</p>
 			<div class="ejemplos">
 				{#each ejemplos as id (id)}
 					<button class="boton secundario chico" onclick={() => onelegir(id)}>{datos.deptos[id].n}</button>
 				{/each}
 			</div>
 			{#if destacados.length}
-				<h4>Los que más se alejan de lo normal a esta fecha</h4>
+				<h4>{t.destacados}</h4>
 				<ol class="destacados">
 					{#each destacados as d (d.id)}
 						<li>
 							<button class="enlace" onclick={() => onelegir(d.id)}><span aria-hidden="true">{ICONO[d.clase]}</span> {d.nombre}</button>
-							<span class="cifra">{anomaliaPct(d.an)}</span>
+							<span class="cifra">{f.anomaliaPct(d.an)}</span>
 						</li>
 					{/each}
 				</ol>
@@ -63,15 +89,15 @@
 		<div class="veredicto" style:--c={COLOR[k]}>
 			<span class="icono" aria-hidden="true">{ICONO[k]}</span>
 			<div>
-				<strong>{ETIQUETA[k]}</strong>
+				<strong>{ETIQUETA[L][k]}</strong>
 				{#if k === 'pocos'}
-					<p>Hay menos de {datos.min_puntos} píxeles de soja en esta campaña: el dato es poco confiable.</p>
+					<p>{t.pocos(datos.min_puntos)}</p>
 				{:else if clase?.an != null}
 					<p>
-						{anomaliaPct(clase.an)} frente a lo habitual al {fechaLarga(fechaDecada(campania, datos.decadas[decada]), false)}.
+						{t.frente(f.anomaliaPct(clase.an), f.fechaLarga(fechaDecada(campania, datos.decadas[decada]), false))}
 					</p>
 				{:else}
-					<p>No hay otras campañas contra las que comparar.</p>
+					<p>{t.sinOtras}</p>
 				{/if}
 			</div>
 		</div>
@@ -80,38 +106,36 @@
 
 		{#if cierre}
 			<section class="cierre" aria-labelledby="t-cierre">
-				<h4 id="t-cierre">Rinde al cierre de la campaña {campania.replace('/20', '/')}</h4>
+				<h4 id="t-cierre">{t.rinde(campania.replace('/20', '/'))}</h4>
 				<ul>
 					{#each cierre as c (c.nombre)}
 						<li>
 							<span class="nombre">{c.nombre}</span>
 							<span class="barra"><span class="relleno {c.tono}" style:width="{(100 * c.valor) / tope}%"></span></span>
-							<span class="valor">{kgha(c.valor)}</span>
+							<span class="valor">{f.kgha(c.valor)}</span>
 						</li>
 					{/each}
 				</ul>
 				<p class="nota">
 					{#if serie.y != null}
-						La estimación usa la campaña completa y se calculó sin conocer el rinde de esta campaña. Oficial contra el promedio histórico:
-						{anomaliaPct(100 * (serie.y / serie.base! - 1))}.
+						{t.notaOficial(f.anomaliaPct(100 * (serie.y / serie.base! - 1)))}
 					{:else}
-						Estimación provisoria: el MAGyP todavía no publicó el rinde oficial de esta campaña. Estimado contra el promedio histórico:
-						{anomaliaPct(100 * (serie.pred! / serie.base! - 1))}.
+						{t.notaProv(f.anomaliaPct(100 * (serie.pred! / serie.base! - 1)))}
 					{/if}
 				</p>
 			</section>
 		{/if}
 
 		<details>
-			<summary>Ver los datos de la curva como tabla</summary>
+			<summary>{t.tabla}</summary>
 			<table>
-				<thead><tr><th>Década</th><th>Esta campaña</th><th>Anomalía</th></tr></thead>
+				<thead><tr>{#each t.cols as c (c)}<th>{c}</th>{/each}</tr></thead>
 				<tbody>
 					{#each datos.decadas as d, i (d)}
 						<tr class:futuro={i > decada}>
-							<td>{fechaLarga(fechaDecada(campania, d), false)}</td>
-							<td>{serie.ndvi[i]?.toFixed(2).replace('.', ',') ?? '–'}</td>
-							<td>{serie.an[i] != null ? anomaliaPct(serie.an[i]!) : '–'}</td>
+							<td>{f.fechaLarga(fechaDecada(campania, d), false)}</td>
+							<td>{serie.ndvi[i] != null ? f.dec(serie.ndvi[i]!, 2, 2) : '–'}</td>
+							<td>{serie.an[i] != null ? f.anomaliaPct(serie.an[i]!) : '–'}</td>
 						</tr>
 					{/each}
 				</tbody>

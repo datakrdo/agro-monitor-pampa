@@ -9,13 +9,13 @@ Dashboard de monitoreo en campaña para la pampa húmeda (152 departamentos con 
 - **Anomalía a la fecha** (alerta temprana, útil para seguros y bancos): la biomasa acumulada hasta hoy contra la misma fecha de las campañas anteriores del mismo departamento.
 - **Rendimiento estimado con su error fuera de muestra** (útil para traders y consultoras): un modelo validado leave-one-campaign-out, siempre comparado contra una línea base honesta.
 
-**[Ver demo en vivo →](https://agro-monitor-pampa.pages.dev)** _(deploy pendiente: ver [Fases](#fases-))_
+**[Ver demo en vivo →](https://agro-monitor-pampa.pages.dev)** · [versión en español](https://agro-monitor-pampa.pages.dev) · [English version](https://agro-monitor-pampa.pages.dev/en/)
 
 ## Herramientas 🛠️
 
 - Python, pandas, scikit-learn (Ridge y gradient boosting, validación leave-one-campaign-out), SciPy, rasterio, geopandas
 - openEO sobre Copernicus Data Space (Sentinel-2 L2A), Open-Meteo (ERA5), INTA MNC y MAGyP como fuentes
-- SvelteKit 2 + Svelte 5, MapLibre GL, Observable Plot, vitest y Playwright
+- SvelteKit 3 + Svelte 5, MapLibre GL, Observable Plot, vitest y Playwright
 - uv, ruff, pytest, GitHub Actions, Cloudflare Pages
 
 ## Habilidades 🧠

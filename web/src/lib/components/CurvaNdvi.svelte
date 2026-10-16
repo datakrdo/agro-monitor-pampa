@@ -1,14 +1,26 @@
 <script lang="ts">
 	import * as Plot from '@observablehq/plot';
 	import { COLOR, cuantil, type Clase } from '../clases';
-	import { fechaDecada, fechaLarga, mesCorto } from '../formato';
+	import { fechaDecada, formatos } from '../formato';
+	import { idioma } from '../i18n';
 	import type { Monitor } from '../datos';
 
 	let { datos, depto, campania, decada, clase }: { datos: Monitor; depto: string; campania: string; decada: number; clase: Clase } = $props();
 	let ancho = $state(420);
 	let host: HTMLDivElement;
 
-	const fmt = (v: number | null | undefined) => (v == null ? '–' : v.toFixed(2).replace('.', ','));
+	const T = {
+		es: {
+			actual: 'Esta campaña', tipico: 'Típico', aria: 'Curva de verdor (NDVI) de la campaña elegida contra el rango de las otras campañas',
+			l1: 'Esta campaña, hasta la fecha elegida', l2: 'Mediana de las otras campañas', l3: 'Rango típico (10%–90%)'
+		},
+		en: {
+			actual: 'This campaign', tipico: 'Typical', aria: 'Greenness curve (NDVI) of the chosen campaign against the range of the other campaigns',
+			l1: 'This campaign, up to the chosen date', l2: 'Median of the other campaigns', l3: 'Typical range (10%–90%)'
+		}
+	};
+	const t = $derived(T[idioma()]);
+	const fmt = (v: number | null | undefined) => (v == null ? '–' : formatos(idioma()).dec(v, 2, 2));
 
 	/** Una fila por década: la campaña elegida y el rango (p10-mediana-p90) de las otras campañas del depto. */
 	function filas(d: Monitor, id: string, c: string) {
@@ -28,11 +40,13 @@
 		const hasta = tabla.filter((r) => r.i <= decada && r.actual !== null);
 		const hoy = tabla[decada];
 		const color = clase === 'normal' || clase === 'pocos' || clase === 'sin_dato' ? '#5f6670' : COLOR[clase];
+		const f = formatos(idioma());
+		const t = T[idioma()];
 		const g = Plot.plot({
 			width: ancho, height: 230, marginLeft: 36, marginRight: 12, marginBottom: 28,
 			style: { background: 'transparent', fontSize: '12px', fontFamily: 'inherit', color: '#646c75', overflow: 'visible' },
-			x: { type: 'utc', label: null, ticks: 'month', tickFormat: (d: Date) => mesCorto(d) },
-			y: { domain: [0, 1], label: null, grid: true, ticks: 5, tickFormat: (d: number) => String(d).replace('.', ',') },
+			x: { type: 'utc', label: null, ticks: 'month', tickFormat: (d: Date) => f.mesCorto(d) },
+			y: { domain: [0, 1], label: null, grid: true, ticks: 5, tickFormat: (d: number) => f.dec(d) },
 			marks: [
 				Plot.areaY(tabla.filter((r) => r.p10 !== null), { x: 'fecha', y1: 'p10', y2: 'p90', fill: '#8a9099', fillOpacity: 0.2 }),
 				Plot.lineY(tabla.filter((r) => r.med !== null), { x: 'fecha', y: 'med', stroke: '#6b737c', strokeDasharray: '4 3', strokeWidth: 1.4 }),
@@ -41,7 +55,7 @@
 				hasta.length ? Plot.dot(hasta.slice(-1), { x: 'fecha', y: 'actual', r: 5, fill: color, stroke: '#fff', strokeWidth: 2 }) : null,
 				Plot.tip(hasta, Plot.pointerX({
 					x: 'fecha', y: 'actual',
-					title: (r: (typeof tabla)[number]) => `${fechaLarga(r.fecha, false)}\nEsta campaña: ${fmt(r.actual)}\nTípico: ${fmt(r.med)}`
+					title: (r: (typeof tabla)[number]) => `${f.fechaLarga(r.fecha, false)}\n${t.actual}: ${fmt(r.actual)}\n${t.tipico}: ${fmt(r.med)}`
 				}))
 			]
 		});
@@ -49,11 +63,11 @@
 	});
 </script>
 
-<div bind:this={host} bind:clientWidth={ancho} class="curva" role="img" aria-label="Curva de verdor (NDVI) de la campaña elegida contra el rango de las otras campañas"></div>
+<div bind:this={host} bind:clientWidth={ancho} class="curva" role="img" aria-label={t.aria}></div>
 <ul class="leyenda">
-	<li><span class="trazo" style:background={clase === 'mala' || clase === 'buena' ? COLOR[clase] : '#5f6670'}></span>Esta campaña, hasta la fecha elegida</li>
-	<li><span class="trazo punteado"></span>Mediana de las otras campañas</li>
-	<li><span class="banda"></span>Rango típico (10%–90%)</li>
+	<li><span class="trazo" style:background={clase === 'mala' || clase === 'buena' ? COLOR[clase] : '#5f6670'}></span>{t.l1}</li>
+	<li><span class="trazo punteado"></span>{t.l2}</li>
+	<li><span class="banda"></span>{t.l3}</li>
 </ul>
 
 <style>

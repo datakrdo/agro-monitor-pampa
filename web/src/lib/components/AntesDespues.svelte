@@ -4,7 +4,10 @@
 		titulo: string;
 		alt: string;
 	}
+	import { idioma } from '../i18n';
+
 	let { antes, despues }: { antes: Lado; despues: Lado } = $props();
+	const etiqueta = $derived(idioma() === 'en' ? 'Slide to compare the two dates' : 'Deslizá para comparar las dos fechas');
 	let pos = $state(50);
 </script>
 
@@ -14,7 +17,7 @@
 	<div class="linea" aria-hidden="true"><span class="perilla">◀ ▶</span></div>
 	<span class="rotulo izq">{antes.titulo}</span>
 	<span class="rotulo der">{despues.titulo}</span>
-	<input type="range" min="0" max="100" step="1" bind:value={pos} aria-label="Deslizá para comparar las dos fechas" />
+	<input type="range" min="0" max="100" step="1" bind:value={pos} aria-label={etiqueta} />
 </div>
 
 <style>

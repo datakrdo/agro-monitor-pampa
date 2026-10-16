@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { clasificar, cuantil, veredicto } from './clases';
-import { anomaliaPct, fechaDecada, fechaLarga, pct } from './formato';
+import { anomaliaPct, fechaDecada, fechaLarga, kgha, mesCorto, pct } from './formato';
 
 describe('clasificar', () => {
 	it('usa el umbral sin incluirlo', () => {
@@ -38,6 +38,14 @@ describe('formato', () => {
 		expect(fechaLarga(fechaDecada('2022/2023', '12-01'))).toBe('1 de diciembre de 2022');
 		expect(fechaLarga(fechaDecada('2022/2023', '01-11'), false)).toBe('11 de enero');
 		expect(fechaDecada('2022/2023', '03-01').getUTCFullYear()).toBe(2023);
+	});
+	it('formatea en inglés', () => {
+		expect(fechaLarga(fechaDecada('2022/2023', '12-01'), true, 'en')).toBe('December 1, 2022');
+		expect(fechaLarga(fechaDecada('2022/2023', '01-11'), false, 'en')).toBe('January 11');
+		expect(mesCorto(fechaDecada('2022/2023', '03-01'), 'en')).toBe('Mar');
+		expect(anomaliaPct(-12.44, 'en')).toBe('−12.4%');
+		expect(kgha(3456.7, 'en')).toBe('3,457 kg/ha');
+		expect(kgha(3456.7)).toBe('3.457 kg/ha');
 	});
 	it('formatea porcentajes en es-AR', () => {
 		expect(pct(0.771)).toBe('77%');
