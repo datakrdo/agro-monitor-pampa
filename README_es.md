@@ -25,7 +25,7 @@ Dashboard de monitoreo en campaña para la pampa húmeda (152 departamentos con 
 - Pipelines incrementales y reanudables bajo una cuota de cómputo (créditos CDSE)
 - Sitio estático de datos: export reproducible, mapa interactivo, accesibilidad y CI de punta a punta
 
-## Por qué está hecho así 🧭
+## Decisiones de diseño 🧭
 
 - **Máscara de cultivo por campaña.** Se usa el Mapa Nacional de Cultivos (MNC) del INTA de cada año, no una máscara estática: la rotación soja/maíz cambia dónde hay soja cada campaña, y con una máscara fija el NDVI "de soja" queda contaminado.
 - **Muestreo, no promedio del raster.** Se toman hasta ~300 píxeles de cultivo por departamento con semilla fija. Cuesta ~1000× menos cómputo, es reproducible y permite dar intervalos de confianza por bootstrap.
@@ -67,68 +67,6 @@ Validación leave-one-campaign-out sobre 932 observaciones (137 departamentos, 7
 - **Con solo 7 campañas hay una única sequía.** No se puede saber si el modelo acierta en otras sequías o si aprendió la de 2022/23; con más años se revisaría.
 - **Ridge le gana a HGB** con las 7 campañas; en años normales empatan.
 - **No gana en todas las campañas.** Ridge le gana a la base en 5 de 7, empata en 2021/22 (327 contra 327) y pierde en 2024/25 (493 contra 416 kg/ha).
-
-## Limitaciones ⚠️
-
-- **Ventana de extracción.** En soja es noviembre–mayo: la integral no es la biomasa del ciclo completo, y lo que se mide es "cobertura" y "senescencia", no siembra ni madurez.
-- **Pocas campañas.** Con 7 campañas la anomalía es una foto de baja potencia estadística: se reporta como diferencia contra la mediana histórica, no como z-score.
-- **Campaña 2025/26, provisoria.** Es la campaña recién cerrada. El INTA todavía no publicó su MNC, así que se usó el de 2024/25 como máscara (`02_muestrear.py --mascara 2024`); cuando salga hay que borrar la campaña y re-extraerla entera, porque cambian los puntos. Además se extrajeron 115 de 152 departamentos (se acabaron los créditos de CDSE; el resto, el mes que viene). Su rinde es una **estimación sin contraste**: el modelo se entrena con las 7 campañas que tienen rinde MAGyP y predice 2025/26 en 102 departamentos (`rendimiento_pronostico_soja.parquet`), y el panel la marca como provisoria hasta que el MAGyP publique el dato oficial. No entra en las métricas de validación.
-- **MNC 2018/19.** Es un mapa único con otra leyenda (soja de primera y de segunda; en trigo incluye cebada, avena y verdeos). Esa campaña es menos comparable.
-- **Trigo.** La clase del MNC es "cereales de invierno" e incluye cebada. Hay estrategias propuestas para separarla (ver [Cebada: separarla del trigo](#cebada-separarla-del-trigo-propuesta-en-análisis)).
-- **Campaña en curso.** Si el INTA todavía no publicó su MNC, la máscara es provisoria (píxeles que fueron del cultivo en campañas previas) y el dashboard la marca.
-- **Alternativas.** Existen los mapas de CONAE con SAOCOM (píxel de 800 m, sin escala departamental) y el Mapa de Cultivos del Gobierno (NDVI por lote). Este proyecto apunta a la escala departamental con validación explícita contra el MAGyP.
-
-## Estructura
-
-```
-agro-monitor-pampa/
-├── web/                      # sitio estático (SvelteKit + MapLibre + Observable Plot)
-├── config/
-│   ├── cultivos.yaml         # ventana, clase MNC y excepciones por campaña
-│   └── regiones.yaml         # provincias por región (vacío = todo el país)
-├── src/agro/
-│   ├── config.py             # carga/valida los YAML
-│   ├── geometrias.py         # IGN SHP -> GeoJSON simplificado por región
-│   ├── magyp.py              # ingesta CKAN de estimaciones agrícolas
-│   ├── muestreo.py           # puntos de cultivo sobre el MNC
-│   ├── cdse.py               # extracción S2 vía openEO, incremental
-│   ├── fenologia.py          # Whittaker, features, IC por bootstrap
-│   ├── anomalia.py           # campaña, anomalía y anomalía a la fecha
-│   ├── clima.py              # Open-Meteo y features de ventana
-│   ├── rendimiento.py        # modelo y validación leave-one-campaign-out
-│   └── gee.py                # extracción GEE de la v1 (se conserva para comparar)
-├── scripts/                  # 01 geometrías · 02 muestreo · 03 MAGyP · 04 extracción · 05 features · 06 clima · 07 modelo · 08 export al sitio · 09 imágenes del hero · 10 miniatura
-├── data/processed/           # parquet/geojson del pipeline; el export al sitio los lee
-├── data/raw/                 # MNC, salidas crudas de CDSE (no se commitean)
-└── tests/
-```
-
-## Inicio rápido 🚀
-
-Solo el sitio (sin credenciales ni Python: los datos ya están en `data/processed/`):
-
-```bash
-uv sync && uv run python scripts/08_exportar_web.py --cultivo soja   # genera los JSON del sitio
-cd web && npm ci && npm run dev                                                                      # http://localhost:5173
-```
-
-`npm run build` deja el sitio estático en `web/build/`; `npm test` corre los tests unitarios (vitest) y de punta a punta (Playwright).
-
-Pipeline completo (necesita una cuenta de [Copernicus Data Space](https://dataspace.copernicus.eu)):
-
-```bash
-uv sync
-uv run python -c "import openeo; openeo.connect('openeo.dataspace.copernicus.eu').authenticate_oidc()"  # una vez
-uv run python scripts/01_geometrias.py --region pampa-humeda
-uv run python scripts/03_magyp.py --region pampa-humeda
-uv run python scripts/02_muestrear.py --cultivo soja --campania 2024     # requiere el MNC en data/raw/mnc/
-uv run python scripts/04_extraer_cdse.py --cultivo soja --campania 2024
-uv run python scripts/05_features.py --cultivo soja
-uv run python scripts/06_clima.py --cultivo soja --campanias 2018 2019 2020 2021 2022 2023 2024 2025   # pasar todas: reescribe el parquet
-uv run python scripts/07_rendimiento.py --cultivo soja
-```
-
-**Costo de la extracción.** CDSE cobra créditos según el área × ventana temporal, no según el número de puntos. En la práctica son ~6 créditos por departamento y campaña (unos 1.000 por campaña de soja completa); el plan gratuito da una cuota mensual. La extracción es idempotente y reanudable: si se corta, se relanza y sigue donde quedó.
 
 ## Agregar un cultivo o una región
 
@@ -204,6 +142,68 @@ Descartado: usar departamentos "puros" del norte como referencia de trigo, porqu
 2. ¿Qué necesita: rinde, superficie, anomalía en campaña, fecha de cosecha o calidad maltera? La calidad (proteína, calibre) no se ve por satélite.
 3. ¿Alcanza con el sur de Buenos Aires?
 
+## Limitaciones ⚠️
+
+- **Ventana de extracción.** En soja es noviembre–mayo: la integral no es la biomasa del ciclo completo, y lo que se mide es "cobertura" y "senescencia", no siembra ni madurez.
+- **Pocas campañas.** Con 7 campañas la anomalía es una foto de baja potencia estadística: se reporta como diferencia contra la mediana histórica, no como z-score.
+- **Campaña 2025/26, provisoria.** Es la campaña recién cerrada. El INTA todavía no publicó su MNC, así que se usó el de 2024/25 como máscara (`02_muestrear.py --mascara 2024`); cuando salga hay que borrar la campaña y re-extraerla entera, porque cambian los puntos. Además se extrajeron 115 de 152 departamentos (se acabaron los créditos de CDSE; el resto, el mes que viene). Su rinde es una **estimación sin contraste**: el modelo se entrena con las 7 campañas que tienen rinde MAGyP y predice 2025/26 en 102 departamentos (`rendimiento_pronostico_soja.parquet`), y el panel la marca como provisoria hasta que el MAGyP publique el dato oficial. No entra en las métricas de validación.
+- **MNC 2018/19.** Es un mapa único con otra leyenda (soja de primera y de segunda; en trigo incluye cebada, avena y verdeos). Esa campaña es menos comparable.
+- **Trigo.** La clase del MNC es "cereales de invierno" e incluye cebada. Hay estrategias propuestas para separarla (ver [Cebada: separarla del trigo](#cebada-separarla-del-trigo-propuesta-en-análisis)).
+- **Campaña en curso.** Si el INTA todavía no publicó su MNC, la máscara es provisoria (píxeles que fueron del cultivo en campañas previas) y el dashboard la marca.
+- **Alternativas.** Existen los mapas de CONAE con SAOCOM (píxel de 800 m, sin escala departamental) y el Mapa de Cultivos del Gobierno (NDVI por lote). Este proyecto apunta a la escala departamental con validación explícita contra el MAGyP.
+
+## Estructura
+
+```
+agro-monitor-pampa/
+├── web/                      # sitio estático (SvelteKit + MapLibre + Observable Plot)
+├── config/
+│   ├── cultivos.yaml         # ventana, clase MNC y excepciones por campaña
+│   └── regiones.yaml         # provincias por región (vacío = todo el país)
+├── src/agro/
+│   ├── config.py             # carga/valida los YAML
+│   ├── geometrias.py         # IGN SHP -> GeoJSON simplificado por región
+│   ├── magyp.py              # ingesta CKAN de estimaciones agrícolas
+│   ├── muestreo.py           # puntos de cultivo sobre el MNC
+│   ├── cdse.py               # extracción S2 vía openEO, incremental
+│   ├── fenologia.py          # Whittaker, features, IC por bootstrap
+│   ├── anomalia.py           # campaña, anomalía y anomalía a la fecha
+│   ├── clima.py              # Open-Meteo y features de ventana
+│   ├── rendimiento.py        # modelo y validación leave-one-campaign-out
+│   └── gee.py                # extracción GEE de la v1 (se conserva para comparar)
+├── scripts/                  # 01 geometrías · 02 muestreo · 03 MAGyP · 04 extracción · 05 features · 06 clima · 07 modelo · 08 export al sitio · 09 imágenes del hero · 10 miniatura
+├── data/processed/           # parquet/geojson del pipeline; el export al sitio los lee
+├── data/raw/                 # MNC, salidas crudas de CDSE (no se commitean)
+└── tests/
+```
+
+## Inicio rápido 🚀
+
+Solo el sitio (sin credenciales ni Python: los datos ya están en `data/processed/`):
+
+```bash
+uv sync && uv run python scripts/08_exportar_web.py --cultivo soja   # genera los JSON del sitio
+cd web && npm ci && npm run dev                                                                      # http://localhost:5173
+```
+
+`npm run build` deja el sitio estático en `web/build/`; `npm test` corre los tests unitarios (vitest) y de punta a punta (Playwright).
+
+Pipeline completo (necesita una cuenta de [Copernicus Data Space](https://dataspace.copernicus.eu)):
+
+```bash
+uv sync
+uv run python -c "import openeo; openeo.connect('openeo.dataspace.copernicus.eu').authenticate_oidc()"  # una vez
+uv run python scripts/01_geometrias.py --region pampa-humeda
+uv run python scripts/03_magyp.py --region pampa-humeda
+uv run python scripts/02_muestrear.py --cultivo soja --campania 2024     # requiere el MNC en data/raw/mnc/
+uv run python scripts/04_extraer_cdse.py --cultivo soja --campania 2024
+uv run python scripts/05_features.py --cultivo soja
+uv run python scripts/06_clima.py --cultivo soja --campanias 2018 2019 2020 2021 2022 2023 2024 2025   # pasar todas: reescribe el parquet
+uv run python scripts/07_rendimiento.py --cultivo soja
+```
+
+**Costo de la extracción.** CDSE cobra créditos según el área × ventana temporal, no según el número de puntos. En la práctica son ~6 créditos por departamento y campaña (unos 1.000 por campaña de soja completa); el plan gratuito da una cuota mensual. La extracción es idempotente y reanudable: si se corta, se relanza y sigue donde quedó.
+
 ## Tests
 
 ```bash
@@ -230,7 +230,7 @@ Cubre campaña y anomalía a la fecha, muestreo (puntos dentro de la clase, semi
 - [ ] Humedad de suelo (NASA SMAP L4) como feature del modelo
 - [ ] Comparación con la extracción vía GEE
 
-## Fuera de alcance (deliberado)
+## Fuera de alcance (a propósito)
 
 - Clasificador propio de cultivos: se usa el MNC del INTA, un dataset publicado y validado.
 - Foundation models o embeddings: el valor marginal no compensa el costo mientras el MNC cubre la máscara.
