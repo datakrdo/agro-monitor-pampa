@@ -2,9 +2,9 @@
 
 # Agro Monitor Pampa 🌱🛰️
 
-**How is this season's soybean crop doing today in each department compared with its history on the same date, and what yield does it anticipate?**
+**How are this season's soybean and wheat crops doing today in each department compared with its history on the same date, and what yield does it anticipate?**
 
-An in-season monitor for Argentina's humid Pampas (152 soybean departments in Buenos Aires, Santa Fe and Córdoba), built on Sentinel-2 through Copernicus Data Space. The site is static (SvelteKit + MapLibre) and hosted for free on Cloudflare Pages. It answers on two layers:
+An in-season monitor for Argentina's humid Pampas (152 soybean and ~150 wheat departments in Buenos Aires, Santa Fe and Córdoba), with a soybean/wheat switch and the rainfall accumulated in each campaign, built on Sentinel-2 through Copernicus Data Space. The site is static (SvelteKit + MapLibre) and hosted for free on Cloudflare Pages. It answers on two layers:
 
 - **Anomaly to date** (early warning, useful for insurers and banks): biomass accumulated so far against the same date in previous campaigns of the same department.
 - **Estimated yield with its out-of-sample error** (useful for traders and consultancies): a leave-one-campaign-out validated model, always compared against an honest baseline.
@@ -98,7 +98,7 @@ agro-monitor-pampa/
 Site only (no credentials, no extraction: the data is already in `data/processed/`):
 
 ```bash
-uv sync && uv run python scripts/08_exportar_web.py --cultivo soja   # builds the site JSON
+uv sync && uv run python scripts/08_exportar_web.py --cultivo soja   # builds the site JSON (repeat with --cultivo trigo)
 cd web && npm ci && npm run dev                                       # http://localhost:5173
 ```
 
@@ -117,6 +117,8 @@ uv run python scripts/05_features.py --cultivo soja
 uv run python scripts/06_clima.py --cultivo soja --campanias 2018 2019 2020 2021 2022 2023 2024 2025   # pass all: it rewrites the parquet
 uv run python scripts/07_rendimiento.py --cultivo soja
 ```
+
+Wheat runs the same steps with `--cultivo trigo` (Aug–Jan window; `06_clima.py` takes `--campanias 2018 … 2025`).
 
 **Extraction cost.** CDSE charges credits by area × time window, not by number of points: about 6 credits per department and campaign (~1,000 per full soybean campaign); the free plan gives a monthly quota. Extraction is idempotent and resumable: if it stops, rerun it and it continues where it left off.
 
@@ -139,9 +141,10 @@ Covers campaign and anomaly-to-date, sampling (points inside the class, fixed se
 - [x] Phenology, anomaly to date, weather and validated yield model
 - [x] Full soybean extraction: 7 campaigns (2018/19–2024/25), Nov–May window
 - [x] Final model metrics with the 7 campaigns (see Results)
-- [x] Static site (SvelteKit + MapLibre) replacing the Streamlit dashboard
+- [x] Static site (SvelteKit + MapLibre) replacing the Streamlit dashboard, with a soybean/wheat switch and cumulative rainfall per department
 - [ ] Soybean 2025/26: 115 of 152 departments extracted with a provisional mask and an estimated yield; 37 departments missing (CDSE credits) and a full re-extraction with the 2025/26 MNC once INTA publishes it
-- [ ] Wheat: full extraction (today only the small barley experiment: 29 departments × 2023 and 2024, Aug–Jan)
+- [x] Wheat: full extraction 2018–2024 (7 campaigns, Aug–Jan window), model and site switch
+- [ ] Wheat 2025: needs INTA's `MNC_inv25.tif` (not published yet), then ~150 departments to extract
 - [ ] Barley: separate it from wheat (strategies under analysis)
 - [ ] Monthly refresh workflow for the running campaign (GitHub Actions)
 - [ ] Deploy to Cloudflare Pages (`.github/workflows/deploy.yml`; the secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are missing)

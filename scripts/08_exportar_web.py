@@ -4,9 +4,9 @@ las curvas, anomalías y estimaciones por depto y campaña, los departamentos
 y las cifras de validación (cuánto acierta el satélite y a qué fecha).
 
 Uso: python scripts/08_exportar_web.py --cultivo soja
-Salida: web/static/data/monitor.json   (se pide al abrir el mapa)
+Salida: web/static/data/monitor_{cultivo}.json  (se pide al abrir el mapa)
         web/static/data/deptos.geojson (polígonos con coordenadas redondeadas)
-        web/src/lib/data/validacion.json (cifras del texto y del gráfico de acierto; se inlinea en el HTML)
+        web/src/lib/data/validacion_{cultivo}.json (cifras del texto y del gráfico de acierto; se inlinea en el HTML)
 """
 
 from __future__ import annotations
@@ -17,14 +17,18 @@ from datetime import date
 
 import pandas as pd
 
-from agro import config, rendimiento
+from agro import clima, config, rendimiento
 from agro.anomalia import MIN_PUNTOS, UMBRAL_ANOMALIA, acierto_por_decada, anomalias_por_decada
 
 OUT_DIR = config.RAIZ / "data" / "processed"
 WEB = config.RAIZ / "web"
 MODELO_WEB = "ridge"  # el que mejor valida (ver Resultados en el README)
 HERO_DEPTO = "06623"  # Pergamino, el piloto de la v1
-DECADA_SEQUIA = "12-01"  # a qué fecha se cuenta cuántos deptos ya estaban en rojo
+# por cultivo: a qué fecha se cuenta cuántos deptos ya estaban en rojo y qué fechas marca el gráfico de acierto
+POR_CULTIVO = {
+    "soja": {"decada_sequia": "12-01", "marcas": ["12-01", "01-01", "03-01"]},
+    "trigo": {"decada_sequia": "10-01", "marcas": ["09-01", "10-01", "11-01"]},
+}
 
 
 def redondear(valores, decimales: int) -> list:
@@ -96,7 +100,14 @@ def main() -> None:
     deptos = pd.read_parquet(OUT_DIR / f"departamentos_{args.region}.parquet").set_index("depto_id")
     geojson = json.loads((OUT_DIR / f"geometrias_{args.region}.geojson").read_text())
 
+    cfg = POR_CULTIVO[args.cultivo]
     decadas = etiquetas_decadas(curvas)
+    diario = pd.read_parquet(OUT_DIR / f"clima_diario_{args.region}.parquet")
+    lluvia = (
+        clima.lluvia_acumulada(diario, curvas)
+        .pivot(index=["campania", "depto_id"], columns="decada", values="mm")
+        .reindex(columns=range(len(decadas)))
+    )
     anomalias = anomalias_por_decada(curvas)
     ndvi = curvas.pivot(index=["campania", "depto_id"], columns="decada", values="valor").reindex(
         columns=range(len(decadas))
@@ -121,6 +132,9 @@ def main() -> None:
             "an": redondear(anom.loc[(campania, depto_id)], 1)
             if (campania, depto_id) in anom.index
             else [None] * len(decadas),
+            "ll": redondear(lluvia.loc[(campania, depto_id)], 0)
+            if (campania, depto_id) in lluvia.index
+            else [None] * len(decadas),
             "np": None if e is None else int(e["n_puntos"]),
             **(
                 {}
@@ -130,7 +144,7 @@ def main() -> None:
             **({} if e is None or pd.isna(e["y"]) else {"y": round(e["y"])}),
         }
     guardar_json(
-        WEB / "static" / "data" / "monitor.json",
+        WEB / "static" / "data" / f"monitor_{args.cultivo}.json",
         {
             "cultivo": args.cultivo,
             "umbral": UMBRAL_ANOMALIA,
@@ -146,7 +160,7 @@ def main() -> None:
     # --- validación ---
     resumen = rendimiento.resumen_validacion(pred)
     peor = resumen["campania_peor"]
-    dec_sequia = decadas.index(DECADA_SEQUIA)
+    dec_sequia = decadas.index(cfg["decada_sequia"])
     sequia = anomalias[(anomalias["campania"] == peor) & (anomalias["decada"] == dec_sequia)]
     real = pred.assign(real=pred["y"] / pred["base"] - 1).query("campania == @peor")
     por_campania = rendimiento.metricas(pred).drop(index="total")
@@ -161,11 +175,12 @@ def main() -> None:
     }
 
     guardar_json(
-        WEB / "src" / "lib" / "data" / "validacion.json",
+        WEB / "src" / "lib" / "data" / f"validacion_{args.cultivo}.json",
         {
             "cultivo": args.cultivo,
             "generado": date.today().isoformat(),
             "umbral": UMBRAL_ANOMALIA,
+            "marcas": cfg["marcas"],
             "acierto": [
                 {
                     "decada": int(r["decada"]),
@@ -198,7 +213,7 @@ def main() -> None:
             ],
             "sequia": {
                 "campania": peor,
-                "fecha": DECADA_SEQUIA,
+                "fecha": cfg["decada_sequia"],
                 "n_deptos": len(sequia),
                 "deptos_en_rojo": round(
                     float((sequia["anomalia_pct"] < -UMBRAL_ANOMALIA).mean()), 3

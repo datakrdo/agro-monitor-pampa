@@ -3,6 +3,7 @@
 	import { fechaDecada, formatos } from '../formato';
 	import { idioma } from '../i18n';
 	import type { Monitor } from '../datos';
+	import CurvaLluvia from './CurvaLluvia.svelte';
 	import CurvaNdvi from './CurvaNdvi.svelte';
 
 	interface Props {
@@ -21,23 +22,23 @@
 	const T = {
 		es: {
 			depto: 'Departamento', h3: 'Elegí uno en el mapa', p: 'O buscalo por nombre. Vas a ver cómo viene su curva de verdor frente a la de otras campañas y cuánto rindió.',
-			destacados: 'Los que más se alejan de lo normal a esta fecha', pocos: (n: number) => `Hay menos de ${n} píxeles de soja en esta campaña: el dato es poco confiable.`,
+			destacados: 'Los que más se alejan de lo normal a esta fecha', pocos: (n: number, c: string) => `Hay menos de ${n} píxeles de ${c} en esta campaña: el dato es poco confiable.`,
 			frente: (a: string, d: string) => `${a} frente a lo habitual al ${d}.`, sinOtras: 'No hay otras campañas contra las que comparar.',
 			base: 'Promedio histórico del departamento', modelo: 'Estimación del modelo', oficial: 'Oficial (MAGyP)',
 			rinde: (c: string) => `Rinde al cierre de la campaña ${c}`,
 			notaOficial: (a: string) => `La estimación usa la campaña completa y se calculó sin conocer el rinde de esta campaña. Oficial contra el promedio histórico: ${a}.`,
 			notaProv: (a: string) => `Estimación provisoria: el MAGyP todavía no publicó el rinde oficial de esta campaña. Estimado contra el promedio histórico: ${a}.`,
-			tabla: 'Ver los datos de la curva como tabla', cols: ['Década', 'Esta campaña', 'Anomalía']
+			tabla: 'Ver los datos de la curva como tabla', cols: ['Década', 'Esta campaña', 'Anomalía', 'Lluvia acum. (mm)'], cultivo: { soja: 'soja', trigo: 'trigo' }
 		},
 		en: {
 			depto: 'Department', h3: 'Pick one on the map', p: 'Or search it by name. You will see how its greenness curve compares with other campaigns and how much it yielded.',
-			destacados: 'Furthest from normal on this date', pocos: (n: number) => `Fewer than ${n} soybean pixels in this campaign: the data is not very reliable.`,
+			destacados: 'Furthest from normal on this date', pocos: (n: number, c: string) => `Fewer than ${n} ${c} pixels in this campaign: the data is not very reliable.`,
 			frente: (a: string, d: string) => `${a} versus usual on ${d}.`, sinOtras: 'There are no other campaigns to compare against.',
 			base: 'Department historical average', modelo: 'Model estimate', oficial: 'Official (MAGyP)',
 			rinde: (c: string) => `Yield at the end of the ${c} campaign`,
 			notaOficial: (a: string) => `The estimate uses the full campaign and was computed without knowing this campaign’s yield. Official versus historical average: ${a}.`,
 			notaProv: (a: string) => `Provisional estimate: MAGyP has not yet published this campaign’s official yield. Estimated versus historical average: ${a}.`,
-			tabla: 'View the curve data as a table', cols: ['Period', 'This campaign', 'Anomaly']
+			tabla: 'View the curve data as a table', cols: ['Period', 'This campaign', 'Anomaly', 'Cumulative rain (mm)'], cultivo: { soja: 'soybean', trigo: 'wheat' }
 		}
 	};
 	const t = $derived(T[L]);
@@ -91,7 +92,7 @@
 			<div>
 				<strong>{ETIQUETA[L][k]}</strong>
 				{#if k === 'pocos'}
-					<p>{t.pocos(datos.min_puntos)}</p>
+					<p>{t.pocos(datos.min_puntos, t.cultivo[datos.cultivo as 'soja' | 'trigo'])}</p>
 				{:else if clase?.an != null}
 					<p>
 						{t.frente(f.anomaliaPct(clase.an), f.fechaLarga(fechaDecada(campania, datos.decadas[decada]), false))}
@@ -103,6 +104,8 @@
 		</div>
 
 		<CurvaNdvi {datos} {depto} {campania} {decada} clase={k} />
+
+		<CurvaLluvia {datos} {depto} {campania} {decada} />
 
 		{#if cierre}
 			<section class="cierre" aria-labelledby="t-cierre">
@@ -136,6 +139,7 @@
 							<td>{f.fechaLarga(fechaDecada(campania, d), false)}</td>
 							<td>{serie.ndvi[i] != null ? f.dec(serie.ndvi[i]!, 2, 2) : '–'}</td>
 							<td>{serie.an[i] != null ? f.anomaliaPct(serie.an[i]!) : '–'}</td>
+							<td>{serie.ll[i] != null ? f.dec(serie.ll[i]!, 0, 0) : '–'}</td>
 						</tr>
 					{/each}
 				</tbody>

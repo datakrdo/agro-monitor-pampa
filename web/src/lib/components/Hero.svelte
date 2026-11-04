@@ -24,6 +24,7 @@
 
 	function verSequia() {
 		const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		monitor.cultivo = 'soja';
 		monitor.campania = sequia.campania;
 		monitor.depto = null;
 		// Con movimiento reducido no se anima: se deja en la fecha del dato.

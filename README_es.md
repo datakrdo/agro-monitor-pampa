@@ -2,9 +2,9 @@
 
 # Agro Monitor Pampa 🌱🛰️
 
-**¿Cómo viene hoy la campaña de soja en cada departamento frente a su historial a la misma fecha, y qué rendimiento anticipa?**
+**¿Cómo vienen hoy las campañas de soja y trigo en cada departamento frente a su historial a la misma fecha, y qué rendimiento anticipa?**
 
-Dashboard de monitoreo en campaña para la pampa húmeda (152 departamentos con soja de Buenos Aires, Santa Fe y Córdoba), hecho con Sentinel-2 vía Copernicus Data Space. El sitio es estático (SvelteKit + MapLibre) y se publica gratis en Cloudflare Pages. Dos capas de respuesta:
+Dashboard de monitoreo en campaña para la pampa húmeda (152 departamentos con soja y ~150 con trigo de Buenos Aires, Santa Fe y Córdoba), con selector soja/trigo y la lluvia acumulada de cada campaña, hecho con Sentinel-2 vía Copernicus Data Space. El sitio es estático (SvelteKit + MapLibre) y se publica gratis en Cloudflare Pages. Dos capas de respuesta:
 
 - **Anomalía a la fecha** (alerta temprana, útil para seguros y bancos): la biomasa acumulada hasta hoy contra la misma fecha de las campañas anteriores del mismo departamento.
 - **Rendimiento estimado con su error fuera de muestra** (útil para traders y consultoras): un modelo validado leave-one-campaign-out, siempre comparado contra una línea base honesta.
@@ -98,7 +98,7 @@ agro-monitor-pampa/
 Solo el sitio (sin credenciales ni Python: los datos ya están en `data/processed/`):
 
 ```bash
-uv sync && uv run python scripts/08_exportar_web.py --cultivo soja   # genera los JSON del sitio
+uv sync && uv run python scripts/08_exportar_web.py --cultivo soja   # genera los JSON del sitio (repetir con --cultivo trigo)
 cd web && npm ci && npm run dev                                                                      # http://localhost:5173
 ```
 
@@ -117,6 +117,8 @@ uv run python scripts/05_features.py --cultivo soja
 uv run python scripts/06_clima.py --cultivo soja --campanias 2018 2019 2020 2021 2022 2023 2024 2025   # pasar todas: reescribe el parquet
 uv run python scripts/07_rendimiento.py --cultivo soja
 ```
+
+El trigo corre los mismos pasos con `--cultivo trigo` (ventana ago–ene; `06_clima.py` con `--campanias 2018 … 2025`).
 
 **Costo de la extracción.** CDSE cobra créditos según el área × ventana temporal, no según el número de puntos. En la práctica son ~6 créditos por departamento y campaña (unos 1.000 por campaña de soja completa); el plan gratuito da una cuota mensual. La extracción es idempotente y reanudable: si se corta, se relanza y sigue donde quedó.
 
@@ -137,11 +139,12 @@ Cubre campaña y anomalía a la fecha, muestreo (puntos dentro de la clase, semi
 - [x] Fenología, anomalía a la fecha, clima y modelo de rendimiento validado
 - [x] Extracción completa de soja: 7 campañas (2018/19–2024/25) con ventana nov–may
 - [ ] Soja 2025/26: 115 de 152 departamentos extraídos con máscara provisoria y rinde estimado; faltan 37 departamentos (créditos CDSE) y re-extraer con el MNC 2025/26 cuando el INTA lo publique
-- [ ] Trigo: extracción completa (hoy solo el experimento chico de cebada: 29 deptos × 2023 y 2024, ago–ene)
+- [x] Trigo: extracción completa 2018–2024 (7 campañas, ventana ago–ene), modelo y selector en el sitio
+- [ ] Trigo 2025: falta el `MNC_inv25.tif` del INTA (todavía no publicado) y luego extraer ~150 departamentos
 - [x] Métricas finales del modelo con las 7 campañas (ver Resultados)
 - [ ] Cebada: separarla del trigo (estrategias propuestas, en análisis)
 - [ ] Workflow mensual de actualización de la campaña en curso (GitHub Actions)
-- [x] Sitio estático (SvelteKit + MapLibre) que reemplaza al dashboard de Streamlit
+- [x] Sitio estático (SvelteKit + MapLibre) que reemplaza al dashboard de Streamlit, con selector soja/trigo y lluvia acumulada por departamento
 - [ ] Deploy en Cloudflare Pages (`.github/workflows/deploy.yml`; faltan los secrets `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`)
 - [ ] Humedad de suelo (NASA SMAP L4) como feature del modelo
 - [ ] Comparación con la extracción vía GEE

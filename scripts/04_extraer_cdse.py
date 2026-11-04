@@ -17,6 +17,7 @@ from agro import cdse, config
 from agro.anomalia import ventana_extraccion
 
 OUT_DIR = config.RAIZ / "data" / "processed"
+PARAR = OUT_DIR / "PARAR"  # `touch data/processed/PARAR` para frenar sin perder jobs en curso
 
 
 def main() -> None:
@@ -52,6 +53,8 @@ def main() -> None:
     conn = cdse.conectar()
 
     def uno(depto_id):
+        if PARAR.exists():  # parada ordenada: no empieza deptos nuevos, termina los en curso
+            return depto_id, None
         pts = puntos[puntos["depto_id"] == depto_id].reset_index(drop=True)
         for intento in range(5):
             try:

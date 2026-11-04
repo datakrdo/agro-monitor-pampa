@@ -13,12 +13,12 @@
 		es: {
 			moneda: 'Tirar una moneda: 50%', clara: 'Con señal clara', todos: 'Todos los casos', al: 'Al',
 			casosClara: 'Casos con señal clara', ojo: 'La validación', h2: '¿Cuánto acierta?',
-			ariaLinea: (a: string, b: string) => `Línea de acierto según la fecha, de ${a} el 1 de diciembre a ${b} al cierre`
+			ariaLinea: (d: string, a: string, b: string) => `Línea de acierto según la fecha, de ${a} el ${d} a ${b} al cierre`
 		},
 		en: {
 			moneda: 'Coin flip: 50%', clara: 'Clear signal', todos: 'All cases', al: 'On',
 			casosClara: 'Clear-signal cases', ojo: 'Validation', h2: 'How accurate is it?',
-			ariaLinea: (a: string, b: string) => `Accuracy line by date, from ${a} on December 1 to ${b} at the end of the campaign`
+			ariaLinea: (d: string, a: string, b: string) => `Accuracy line by date, from ${a} on ${d} to ${b} at the end of the campaign`
 		}
 	};
 	const t = $derived(T[idioma()]);
@@ -29,7 +29,8 @@
 	const en = (mmdd: string) => acierto.find((a) => a.fecha === mmdd)!;
 	// El año es solo de referencia para ubicar nov-may en el eje.
 	const REF = '2022/2023';
-	const marcas = ['12-01', '01-01', '03-01'];
+	const marcas = $derived(validacion.marcas);
+	const fl = (mmdd: string) => f.fechaLarga(fechaDecada(REF, mmdd), false);
 	let ancho = $state(640);
 	let host: HTMLDivElement;
 
@@ -41,7 +42,7 @@
 			width: ancho, height: Math.max(300, Math.min(380, ancho * 0.52)), marginLeft: 44, marginRight: ancho > 520 ? 118 : 12, marginTop: 24,
 			style: { background: 'transparent', fontSize: '12px', fontFamily: 'inherit', color: '#646c75', overflow: 'visible' },
 			x: { type: 'utc', label: null, ticks: 'month', tickFormat: (d: Date) => f.mesCorto(d) },
-			y: { domain: [0.4, 0.9], label: null, grid: true, ticks: 5, tickFormat: (d: number) => `${Math.round(d * 100)}%` },
+			y: { domain: [Math.floor(Math.min(0.5, ...acierto.map((a) => a.acierto_sin_umbral)) * 10) / 10, Math.ceil(Math.max(...acierto.map((a) => a.acierto)) * 10) / 10], label: null, grid: true, ticks: 5, tickFormat: (d: number) => `${Math.round(d * 100)}%` },
 			marks: [
 				Plot.ruleY([0.5], { stroke: '#8a9099', strokeDasharray: '4 3' }),
 				Plot.text([{ f: filas[0].f }], { x: 'f', y: 0.5, text: () => t.moneda, dy: 11, textAnchor: 'start', fill: '#646c75' }),
@@ -84,7 +85,7 @@
 				<p class="sub">
 					Porcentaje de casos en que el satélite acertó si la campaña terminó por encima o por debajo de lo normal de cada departamento.
 				</p>
-				<div bind:this={host} bind:clientWidth={ancho} role="img" aria-label={t.ariaLinea(f.pct(en('12-01').acierto), f.pct(acierto.at(-1)!.acierto))}></div>
+				<div bind:this={host} bind:clientWidth={ancho} role="img" aria-label={t.ariaLinea(fl(marcas[0]), f.pct(en(marcas[0]).acierto), f.pct(acierto.at(-1)!.acierto))}></div>
 				<details>
 					<summary>{L === 'en' ? 'View the data as a table' : 'Ver los datos como tabla'}</summary>
 					<table>
@@ -102,12 +103,12 @@
 
 			<div class="datos">
 				<div class="tarjeta dato">
-					<strong>{f.pct(en('03-01').acierto)}</strong>
+					<strong>{f.pct(en(marcas[2]).acierto)}</strong>
 					<p>
 						{#if L === 'en'}
-							accurate on March 1, when the anomaly is clear (more than {umbral}% either way: {f.pct(en('03-01').marcados)} of cases).
+							accurate on {fl(marcas[2])}, when the anomaly is clear (more than {umbral}% either way: {f.pct(en(marcas[2]).marcados)} of cases).
 						{:else}
-							acierta al 1 de marzo, cuando la anomalía es clara (más de {umbral}% hacia un lado: {f.pct(en('03-01').marcados)} de los casos).
+							acierta al {fl(marcas[2])}, cuando la anomalía es clara (más de {umbral}% hacia un lado: {f.pct(en(marcas[2]).marcados)} de los casos).
 						{/if}
 					</p>
 				</div>
@@ -139,8 +140,8 @@
 			<ul>
 				{#if L === 'en'}
 					<li>
-						<strong>Early on it is hard.</strong> On December 1 accuracy is {f.pct(en('12-01').acierto)}, close to a coin flip. The {camp(sequia.campania)} drought showed up
-						early ({f.pct(sequia.deptos_en_rojo)} of departments in red that day) because it was very severe.
+						<strong>Early on it is hard.</strong> On {fl(marcas[0])} accuracy is {f.pct(en(marcas[0]).acierto)}. The {camp(sequia.campania)} drought showed up
+						early ({f.pct(sequia.deptos_en_rojo)} of departments in red on {fl(sequia.fecha)}) because it was very severe.
 					</li>
 					<li><strong>That is {modelo.n_campanias} campaigns and a single drought.</strong> We do not know how it responds in other droughts.</li>
 					<li>
@@ -148,8 +149,8 @@
 					</li>
 				{:else}
 					<li>
-						<strong>Al principio es difícil.</strong> El 1 de diciembre el acierto es de {f.pct(en('12-01').acierto)}, cerca de tirar una moneda. La sequía de {camp(sequia.campania)} se vio
-						temprano ({f.pct(sequia.deptos_en_rojo)} de los departamentos en rojo ese día) porque fue muy fuerte.
+						<strong>Al principio es difícil.</strong> Al {fl(marcas[0])} el acierto es de {f.pct(en(marcas[0]).acierto)}. La sequía de {camp(sequia.campania)} se vio
+						temprano ({f.pct(sequia.deptos_en_rojo)} de los departamentos en rojo al {fl(sequia.fecha)}) porque fue muy fuerte.
 					</li>
 					<li><strong>Son {modelo.n_campanias} campañas y una sola sequía.</strong> No sabemos cómo responde en otras sequías.</li>
 					<li>

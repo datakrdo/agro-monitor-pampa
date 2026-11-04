@@ -26,4 +26,4 @@ test-results
 
 # Los genera scripts/08_exportar_web.py (en CI se regeneran antes del build)
 /static/data/
-/src/lib/data/validacion.json
+/src/lib/data/validacion_*.json

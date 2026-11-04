@@ -67,6 +67,18 @@ def tramos_faltantes(fechas: pd.Series, inicio, fin) -> list[tuple[str, str]]:
     return tramos
 
 
+def lluvia_acumulada(diario: pd.DataFrame, curvas: pd.DataFrame) -> pd.DataFrame:
+    """Lluvia acumulada (mm) desde la primera década de cada campaña hasta la fecha de cada
+    década, inclusive. Sin clima en esa fecha (campaña en curso) queda NaN."""
+    salida = []
+    for _, g in curvas.groupby("campania"):
+        d = diario[diario["fecha"] >= g["fecha"].min()].sort_values(["depto_id", "fecha"])
+        d = d.assign(mm=d.groupby("depto_id")["precipitation_sum"].cumsum())
+        fechas = g[["campania", "depto_id", "decada", "fecha"]].drop_duplicates()
+        salida.append(fechas.merge(d[["depto_id", "fecha", "mm"]], on=["depto_id", "fecha"], how="left"))
+    return pd.concat(salida, ignore_index=True).drop(columns="fecha")
+
+
 def features_ventana(diario: pd.DataFrame, inicio, fin, tmax_calor: float = TMAX_CALOR) -> dict:
     """Features climáticas en [inicio, fin): lluvia acumulada, días de calor
     (Tmax > `tmax_calor`, 32 °C por defecto), balance hídrico (lluvia - ET0) y Tmax media. Con la ventana

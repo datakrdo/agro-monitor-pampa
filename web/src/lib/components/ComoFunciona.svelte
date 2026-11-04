@@ -10,12 +10,12 @@
 			repo: 'el repositorio',
 			pasos: [
 		{
-			titulo: 'El satélite mira la soja, no todo el campo',
-			texto: 'Sentinel-2 (programa Copernicus de la Agencia Espacial Europea) pasa cada 5 días. Usamos solo los píxeles que el INTA mapeó como soja ese año, para no mezclarla con maíz, monte o pasturas.'
+			titulo: 'El satélite mira el cultivo, no todo el campo',
+			texto: 'Sentinel-2 (programa Copernicus de la Agencia Espacial Europea) pasa cada 5 días. Usamos solo los píxeles que el INTA mapeó como soja o trigo ese año, para no mezclarlos con maíz, monte o pasturas.'
 		},
 		{
 			titulo: 'Una curva de verdor por departamento',
-			texto: 'De esos píxeles sale un índice de vegetación (NDVI) cada 10 días, sin nubes y suavizado. Es una medida de cuánta soja verde hay y cuándo.'
+			texto: 'De esos píxeles sale un índice de vegetación (NDVI) cada 10 días, sin nubes y suavizado. Es una medida de cuánto cultivo verde hay y cuándo, para la soja y para el trigo.'
 		},
 		{
 			titulo: 'Se compara con su propia historia',
@@ -34,12 +34,12 @@
 			repo: 'the repository',
 			pasos: [
 		{
-			titulo: 'The satellite looks at soybeans, not the whole field',
-			texto: 'Sentinel-2 (the European Space Agency’s Copernicus programme) passes every 5 days. We use only the pixels INTA mapped as soybean that year, so it is not mixed up with maize, woodland or pasture.'
+			titulo: 'The satellite looks at the crop, not the whole field',
+			texto: 'Sentinel-2 (the European Space Agency’s Copernicus programme) passes every 5 days. We use only the pixels INTA mapped as soybean or wheat that year, so they are not mixed up with maize, woodland or pasture.'
 		},
 		{
 			titulo: 'One greenness curve per department',
-			texto: 'From those pixels we get a vegetation index (NDVI) every 10 days, cloud-free and smoothed. It measures how much green soybean there is and when.'
+			texto: 'From those pixels we get a vegetation index (NDVI) every 10 days, cloud-free and smoothed. It measures how much green crop there is and when, for soybeans and for wheat.'
 		},
 		{
 			titulo: 'Compared with its own history',

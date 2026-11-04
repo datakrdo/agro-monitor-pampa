@@ -53,3 +53,21 @@ test('la versión en inglés y el toggle de idioma', async ({ page }) => {
 	await expect(page).toHaveURL(/\/en\/$/);
 	await expect(page.locator('.panel h3')).toHaveText('Pergamino');
 });
+
+test('el selector de cultivo cambia a trigo y el panel muestra la lluvia acumulada', async ({ page }) => {
+	const errores: string[] = [];
+	page.on('pageerror', (e) => errores.push(e.message));
+
+	await page.goto('/');
+	await expect(page.locator('#monitor .titular')).toBeVisible({ timeout: 20_000 });
+	await page.getByRole('group', { name: 'Cultivo' }).getByRole('button', { name: 'Trigo' }).click();
+	await expect(page.locator('#monitor select')).toHaveValue('2024/2025');
+
+	await page.getByPlaceholder(/Buscar/).fill('Pergamino (Buenos Aires)');
+	await page.getByPlaceholder(/Buscar/).press('Enter');
+	await page.locator('#monitor select').selectOption('2022/2023');
+	await expect(page.locator('.panel .resumen')).toContainText('Llovieron');
+	await expect(page.locator('.panel h4', { hasText: 'Lluvia acumulada' })).toBeVisible();
+
+	expect(errores).toEqual([]);
+});

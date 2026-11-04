@@ -21,6 +21,16 @@ def test_features_ventana_solo_cuenta_la_ventana():
     assert f["balance_mm"] == 12.0 - 30.0
 
 
+def test_lluvia_acumulada_suma_hasta_la_fecha_y_deja_nan_sin_clima():
+    diario = pd.DataFrame(
+        {"depto_id": "a", "fecha": pd.date_range("2025-01-01", "2025-01-15"), "precipitation_sum": 1.0}
+    )
+    fechas = pd.to_datetime(["2025-01-01", "2025-01-11", "2025-01-21"])
+    curvas = pd.DataFrame({"campania": "c", "depto_id": "a", "decada": [0, 1, 2], "fecha": fechas, "valor": 0.5})
+    mm = clima.lluvia_acumulada(diario, curvas).sort_values("decada")["mm"].tolist()
+    assert mm[:2] == [1.0, 11.0] and pd.isna(mm[2])  # 1 y 11 días de 1 mm; el 21 no tiene clima
+
+
 def test_punto_representativo_cae_dentro_de_un_poligono_concavo():
     u = Polygon(
         [(0, 0), (10, 0), (10, 10), (7, 10), (7, 3), (3, 3), (3, 10), (0, 10)]

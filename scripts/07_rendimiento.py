@@ -52,7 +52,7 @@ def main() -> None:
     pron = pd.concat(pron, ignore_index=True)
     pron.to_parquet(OUT_DIR / f"rendimiento_pronostico_{args.cultivo}.parquet", index=False)
     print(
-        f"pronóstico: {pron['campania'].unique().tolist()}, {pron['depto_id'].nunique() if len(pron) else 0} deptos"
+        f"pronóstico: {pron['campania'].unique().tolist() if len(pron) else []}, {pron['depto_id'].nunique() if len(pron) else 0} deptos"
     )
     m = pd.concat(mets, ignore_index=True)
     m.to_parquet(OUT_DIR / f"rendimiento_metricas_{args.cultivo}.parquet", index=False)

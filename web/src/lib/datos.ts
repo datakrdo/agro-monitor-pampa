@@ -2,6 +2,7 @@
 export interface Serie {
 	ndvi: (number | null)[];
 	an: (number | null)[]; // anomalía a la fecha en % (null si no hay campañas contra las que comparar)
+	ll: (number | null)[]; // lluvia acumulada (mm) desde el inicio de la campaña hasta cada década
 	np: number | null; // píxeles de cultivo muestreados
 	y?: number; // rinde oficial MAGyP (kg/ha)
 	base?: number; // promedio histórico del depto sin esta campaña
@@ -22,6 +23,7 @@ export interface Validacion {
 	cultivo: string;
 	generado: string;
 	umbral: number;
+	marcas: string[]; // 'MM-DD' que resalta el gráfico de acierto
 	acierto: {
 		decada: number;
 		fecha: string;

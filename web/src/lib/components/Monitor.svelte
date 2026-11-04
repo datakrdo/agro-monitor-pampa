@@ -14,23 +14,40 @@
 	let error = $state(false);
 	let tablaAbierta = $state(false);
 
+	const cache: Record<string, Monitor> = {};
 	onMount(async () => {
 		try {
-			const [m, g] = await Promise.all([
-				fetch('/data/monitor.json').then((r) => r.json() as Promise<Monitor>),
-				fetch('/data/deptos.geojson').then((r) => r.json() as Promise<FeatureCollection>)
-			]);
-			datos = m;
-			geojson = g;
-			// Si el hero todavía no eligió una campaña, se arranca en la última, ya terminada.
-			if (!monitor.campania) {
-				monitor.campania = m.campanias[m.campanias.length - 1];
-				monitor.decada = m.decadas.length - 1;
-			}
+			geojson = await fetch('/data/deptos.geojson').then((r) => r.json() as Promise<FeatureCollection>);
 		} catch {
 			error = true;
 		}
 	});
+
+	$effect(() => {
+		const c = monitor.cultivo;
+		(async () => {
+			try {
+				cache[c] ??= await fetch(`/data/monitor_${c}.json`).then((r) => r.json() as Promise<Monitor>);
+				if (monitor.cultivo !== c) return;
+				const m = cache[c];
+				// Sin campaña elegida (o de otro cultivo) se arranca en la última, ya terminada.
+				if (!m.campanias.includes(monitor.campania)) {
+					monitor.campania = m.campanias[m.campanias.length - 1];
+					monitor.decada = m.decadas.length - 1;
+				}
+				datos = m;
+			} catch {
+				error = true;
+			}
+		})();
+	});
+
+	function elegirCultivo(c: 'soja' | 'trigo') {
+		if (c === monitor.cultivo) return;
+		monitor.reproduciendo = false;
+		monitor.campania = '';
+		monitor.cultivo = c;
+	}
 
 	const n = $derived(datos?.decadas.length ?? 0);
 	const fecha = $derived(datos && monitor.campania ? fechaDecada(monitor.campania, datos.decadas[monitor.decada] ?? datos.decadas[0]) : null);
@@ -73,7 +90,7 @@
 		es: {
 			error: 'No se pudieron cargar los datos del mapa.', ojo: 'El monitor', h2: 'Cómo viene cada departamento frente a su propia historia',
 			lede: 'Elegí una campaña y mové la fecha: cada departamento se pinta según su verdor acumulado contra el de otras campañas a esa misma fecha.',
-			campania: 'Campaña', pausar: '❚❚ Pausar', reproducir: '▶ Reproducir', al: 'Al', depto: 'Departamento', buscar: 'Buscar, por ejemplo Pergamino',
+			cultivo: 'Cultivo', cultivos: { soja: 'Soja', trigo: 'Trigo' }, campania: 'Campaña', pausar: '❚❚ Pausar', reproducir: '▶ Reproducir', al: 'Al', depto: 'Departamento', buscar: 'Buscar, por ejemplo Pergamino',
 			leyenda: 'Leyenda del mapa', mas: (u: string) => ` (más de ${u}%)`, region: 'Ver toda la región', tabla: 'Ver el mapa como tabla',
 			cols: ['Departamento', 'Provincia', 'Estado', 'Anomalía'], cargando: 'Cargando datos…',
 			titulo: { mala: 'Viene por debajo de lo normal', normal: 'Viene dentro de lo normal', buena: 'Viene por encima de lo normal' }
@@ -81,7 +98,7 @@
 		en: {
 			error: 'The map data could not be loaded.', ojo: 'The monitor', h2: 'How each department is doing against its own history',
 			lede: 'Pick a campaign and move the date: each department is coloured by its accumulated greenness against that of other campaigns on the same date.',
-			campania: 'Campaign', pausar: '❚❚ Pause', reproducir: '▶ Play', al: 'On', depto: 'Department', buscar: 'Search, e.g. Pergamino',
+			cultivo: 'Crop', cultivos: { soja: 'Soybean', trigo: 'Wheat' }, campania: 'Campaign', pausar: '❚❚ Pause', reproducir: '▶ Play', al: 'On', depto: 'Department', buscar: 'Search, e.g. Pergamino',
 			leyenda: 'Map legend', mas: (u: string) => ` (more than ${u}%)`, region: 'View the whole region', tabla: 'View the map as a table',
 			cols: ['Department', 'Province', 'Status', 'Anomaly'], cargando: 'Loading data…',
 			titulo: { mala: 'Running below normal', normal: 'Running within normal', buena: 'Running above normal' }
@@ -132,6 +149,11 @@
 			<p class="error" role="alert">{t.error}</p>
 		{:else if datos && geojson && fecha}
 			<div class="controles">
+				<div class="cultivo" role="group" aria-label={t.cultivo}>
+					{#each ['soja', 'trigo'] as c (c)}
+						<button aria-pressed={monitor.cultivo === c} onclick={() => elegirCultivo(c as 'soja' | 'trigo')}>{t.cultivos[c as 'soja' | 'trigo']}</button>
+					{/each}
+				</div>
 				<label>
 					<span>{t.campania}</span>
 					<select bind:value={monitor.campania} onchange={() => (monitor.reproduciendo = false)}>
@@ -236,9 +258,29 @@
 	}
 	@media (min-width: 900px) {
 		.controles {
-			grid-template-columns: auto minmax(0, 1fr) minmax(0, 0.8fr);
+			grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 0.8fr);
 			align-items: end;
 		}
+	}
+	.cultivo {
+		display: flex;
+		border: 1px solid #c9c6bd;
+		border-radius: 8px;
+		overflow: hidden;
+		width: fit-content;
+	}
+	.cultivo button {
+		appearance: none;
+		border: 0;
+		padding: 0.5rem 0.9rem;
+		background: #fff;
+		color: var(--ink-2);
+		font: 600 0.9rem var(--sans);
+		cursor: pointer;
+	}
+	.cultivo button[aria-pressed='true'] {
+		background: var(--ink);
+		color: #fff;
 	}
 	label {
 		display: grid;

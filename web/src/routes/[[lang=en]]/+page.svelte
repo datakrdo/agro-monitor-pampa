@@ -5,14 +5,17 @@
 	import Hero from '../../lib/components/Hero.svelte';
 	import Monitor from '../../lib/components/Monitor.svelte';
 	import hero from '../../lib/data/hero_imagenes.json';
-	import validacion from '../../lib/data/validacion.json';
+	import validacionSoja from '../../lib/data/validacion_soja.json';
+	import validacionTrigo from '../../lib/data/validacion_trigo.json';
+	import { monitor } from '../../lib/estado.svelte';
 	import type { HeroImagenes, Validacion } from '../../lib/datos';
 	import { idioma } from '../../lib/i18n';
 
 	const REPO = 'https://github.com/datakrdo/agro-monitor-pampa';
 	// og:image tiene que ser una URL absoluta: se completa con la del deploy (https://<proyecto>.pages.dev).
 	const REPO_SITIO = 'https://agro-monitor-pampa.pages.dev';
-	const v = validacion as Validacion;
+	const v = validacionSoja as Validacion; // hero y pie son de soja
+	const vFunciona = $derived(monitor.cultivo === 'trigo' ? (validacionTrigo as Validacion) : v);
 	const decadas = v.acierto.map((a) => a.fecha);
 	const L = $derived(idioma());
 	const T = {
@@ -76,7 +79,7 @@
 <main id="top">
 	<Hero validacion={v} imagenes={hero as HeroImagenes} {decadas} />
 	<Monitor />
-	<Funciona validacion={v} />
+	<Funciona validacion={vFunciona} />
 	<ComoFunciona repo={REPO} />
 </main>
 
