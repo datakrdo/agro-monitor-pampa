@@ -138,7 +138,7 @@ Cubre campaña y anomalía a la fecha, muestreo (puntos dentro de la clase, semi
 - [x] Muestreo sobre el MNC del INTA y extracción Sentinel-2 vía CDSE, incremental
 - [x] Fenología, anomalía a la fecha, clima y modelo de rendimiento validado
 - [x] Extracción completa de soja: 7 campañas (2018/19–2024/25) con ventana nov–may
-- [ ] Soja 2025/26: 115 de 152 departamentos extraídos con máscara provisoria y rinde estimado; faltan 37 departamentos (créditos CDSE) y re-extraer con el MNC 2025/26 cuando el INTA lo publique
+- [ ] Soja 2025/26: los 152 departamentos extraídos, pero con máscara provisoria y rinde estimado; re-extraer con el MNC 2025/26 cuando el INTA lo publique
 - [x] Trigo: extracción completa 2018–2024 (7 campañas, ventana ago–ene), modelo y selector en el sitio
 - [ ] Trigo 2025: falta el `MNC_inv25.tif` del INTA (todavía no publicado) y luego extraer ~150 departamentos
 - [x] Métricas finales del modelo con las 7 campañas (ver Resultados)
@@ -233,7 +233,7 @@ Descartado: usar departamentos "puros" del norte como referencia de trigo, porqu
 
 - **Ventana de extracción.** En soja es noviembre–mayo: la integral no es la biomasa del ciclo completo, y lo que se mide es "cobertura" y "senescencia", no siembra ni madurez.
 - **Pocas campañas.** Con 7 campañas la anomalía es una foto de baja potencia estadística: se reporta como diferencia contra la mediana histórica, no como z-score.
-- **Campaña 2025/26, provisoria.** Es la campaña recién cerrada. El INTA todavía no publicó su MNC, así que se usó el de 2024/25 como máscara (`02_muestrear.py --mascara 2024`); cuando salga hay que borrar la campaña y re-extraerla entera, porque cambian los puntos. Además se extrajeron 115 de 152 departamentos (se acabaron los créditos de CDSE; el resto, el mes que viene). Su rinde es una **estimación sin contraste**: el modelo se entrena con las 7 campañas que tienen rinde MAGyP y predice 2025/26 en 102 departamentos (`rendimiento_pronostico_soja.parquet`), y el panel la marca como provisoria hasta que el MAGyP publique el dato oficial. No entra en las métricas de validación.
+- **Campaña 2025/26, provisoria.** Es la campaña recién cerrada. El INTA todavía no publicó su MNC, así que se usó el de 2024/25 como máscara (`02_muestrear.py --mascara 2024`); cuando salga hay que borrar la campaña y re-extraerla entera, porque cambian los puntos. Los 152 departamentos están extraídos. Su rinde es una **estimación sin contraste**: el modelo se entrena con las 7 campañas que tienen rinde MAGyP y predice 2025/26 en 137 departamentos (`rendimiento_pronostico_soja.parquet`), y el panel la marca como provisoria hasta que el MAGyP publique el dato oficial. No entra en las métricas de validación.
 - **MNC 2018/19.** Es un mapa único con otra leyenda (soja de primera y de segunda; en trigo incluye cebada, avena y verdeos). Esa campaña es menos comparable.
 - **Trigo.** La clase del MNC es "cereales de invierno" e incluye cebada. Hay estrategias propuestas para separarla (ver [Cebada: separarla del trigo](#cebada-separarla-del-trigo-propuesta-en-análisis)).
 - **Campaña en curso.** Si el INTA todavía no publicó su MNC, la máscara es provisoria (píxeles que fueron del cultivo en campañas previas) y el dashboard la marca.

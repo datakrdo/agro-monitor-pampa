@@ -142,7 +142,7 @@ Covers campaign and anomaly-to-date, sampling (points inside the class, fixed se
 - [x] Full soybean extraction: 7 campaigns (2018/19–2024/25), Nov–May window
 - [x] Final model metrics with the 7 campaigns (see Results)
 - [x] Static site (SvelteKit + MapLibre) replacing the Streamlit dashboard, with a soybean/wheat switch and cumulative rainfall per department
-- [ ] Soybean 2025/26: 115 of 152 departments extracted with a provisional mask and an estimated yield; 37 departments missing (CDSE credits) and a full re-extraction with the 2025/26 MNC once INTA publishes it
+- [ ] Soybean 2025/26: all 152 departments extracted, but with a provisional mask and an estimated yield; full re-extraction with the 2025/26 MNC once INTA publishes it
 - [x] Wheat: full extraction 2018–2024 (7 campaigns, Aug–Jan window), model and site switch
 - [ ] Wheat 2025: needs INTA's `MNC_inv25.tif` (not published yet), then ~150 departments to extract
 - [ ] Barley: separate it from wheat (strategies under analysis)
@@ -235,7 +235,7 @@ Discarded: using "pure" northern departments as a wheat reference, because pheno
 
 - **Extraction window.** For soybean it is November–May: the integral is not the full-cycle biomass, and what is measured is "cover" and "senescence", not sowing or maturity.
 - **Few campaigns.** With 7 campaigns the anomaly has low statistical power: it is reported as a difference against the historical median, not as a z-score.
-- **Campaign 2025/26 is provisional.** INTA has not published its MNC yet, so the 2024/25 one was used as the mask (`02_muestrear.py --mascara 2024`); once it is out, the campaign must be deleted and re-extracted in full because the points change. Only 115 of 152 departments were extracted (CDSE credits ran out; the rest next month). Its yield is an **estimate with no benchmark**: the model is trained on the 7 campaigns that have MAGyP yield and predicts 2025/26 for 102 departments (`rendimiento_pronostico_soja.parquet`); the site flags it as provisional until MAGyP publishes the official figure. It is not part of the validation metrics.
+- **Campaign 2025/26 is provisional.** INTA has not published its MNC yet, so the 2024/25 one was used as the mask (`02_muestrear.py --mascara 2024`); once it is out, the campaign must be deleted and re-extracted in full because the points change. All 152 departments are extracted. Its yield is an **estimate with no benchmark**: the model is trained on the 7 campaigns that have MAGyP yield and predicts 2025/26 for 137 departments (`rendimiento_pronostico_soja.parquet`); the site flags it as provisional until MAGyP publishes the official figure. It is not part of the validation metrics.
 - **MNC 2018/19.** A single map with a different legend (first- and second-crop soybean; in wheat it includes barley, oats and cover crops). That campaign is less comparable.
 - **Wheat.** The MNC class is "winter cereals" and includes barley. Separating them is under analysis (details, strategies and a failed first experiment in the [Spanish README](README_es.md#cebada-separarla-del-trigo-propuesta-en-análisis)).
 - **Running campaign.** If INTA has not published its MNC yet, the mask is provisional (pixels that held the crop in previous campaigns).
