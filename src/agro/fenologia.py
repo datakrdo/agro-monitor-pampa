@@ -73,7 +73,7 @@ def features_depto(serie: pd.DataFrame, lam: float = 2.0, n_boot: int = 200, see
     rng = np.random.default_rng(seed)
     integral = filas["integral"].to_numpy()
     boot = [np.median(rng.choice(integral, len(integral))) for _ in range(n_boot)]
-    dia = lambda c: float(filas[c].dt.dayofyear.median())
+    dia = lambda c: float(filas[c].dt.day_of_year.median())
     return {
         "integral": float(np.median(integral)),
         "integral_p5": float(np.percentile(boot, 5)),

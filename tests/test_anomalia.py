@@ -5,68 +5,7 @@ from agro.anomalia import (
     acierto_por_decada,
     anomalia_a_la_fecha,
     anomalias_por_decada,
-    asignar_campania,
-    calcular_anomalia,
-    calcular_features,
 )
-
-SOJA = {"mes_inicio": 11, "mes_fin": 5, "cruza_anio": True}
-TRIGO = {"mes_inicio": 5, "mes_fin": 12, "cruza_anio": False}
-
-
-def test_asignar_campania_soja_cruza_anio():
-    # Diciembre pertenece a la campaña que arrancó en noviembre del mismo año.
-    assert asignar_campania(pd.Timestamp("2023-12-01"), SOJA) == "2023/2024"
-    # Marzo pertenece a la campaña que arrancó el noviembre anterior.
-    assert asignar_campania(pd.Timestamp("2024-03-01"), SOJA) == "2023/2024"
-
-
-def test_asignar_campania_trigo_no_cruza():
-    assert asignar_campania(pd.Timestamp("2023-09-01"), TRIGO) == "2023/2024"
-
-
-def test_asignar_campania_fuera_de_ventana():
-    # Julio es invierno pleno, fuera de la ventana de soja.
-    assert asignar_campania(pd.Timestamp("2023-07-01"), SOJA) is None
-
-
-def test_calcular_features_integral_y_pico():
-    series = pd.DataFrame(
-        {
-            "depto_id": ["06854"] * 3,
-            "fecha": pd.to_datetime(["2023-11-01", "2023-12-01", "2024-01-01"]),
-            "ndvi": [0.3, 0.6, 0.4],
-        }
-    )
-    features = calcular_features(series, SOJA)
-    assert len(features) == 1
-    fila = features.iloc[0]
-    assert fila["campania"] == "2023/2024"
-    assert fila["ndvi_integral"] == pytest.approx(1.3)
-    assert fila["ndvi_pico"] == pytest.approx(0.6)
-    assert fila["mes_pico"] == 12
-
-
-def test_calcular_anomalia_campania_mala_da_negativo():
-    features = pd.DataFrame(
-        {
-            "depto_id": ["06854"] * 4,
-            "campania": ["2020/2021", "2021/2022", "2022/2023", "2023/2024"],
-            "ndvi_integral": [3.0, 3.2, 3.1, 1.0],  # última campaña, sequía
-        }
-    )
-    out = calcular_anomalia(features)
-    peor = out[out["campania"] == "2023/2024"].iloc[0]
-    assert peor["anomalia_pct"] < -50
-    assert peor["percentil_historico"] == pytest.approx(25.0)
-
-
-def test_calcular_anomalia_una_sola_campania_no_rompe():
-    features = pd.DataFrame(
-        {"depto_id": ["06854"], "campania": ["2023/2024"], "ndvi_integral": [2.0]}
-    )
-    out = calcular_anomalia(features)
-    assert pd.isna(out.iloc[0]["anomalia_pct"])
 
 
 def _curvas(valores_por_campania):

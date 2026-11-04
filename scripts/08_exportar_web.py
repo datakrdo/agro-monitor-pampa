@@ -164,15 +164,16 @@ def main() -> None:
     sequia = anomalias[(anomalias["campania"] == peor) & (anomalias["decada"] == dec_sequia)]
     real = pred.assign(real=pred["y"] / pred["base"] - 1).query("campania == @peor")
     por_campania = rendimiento.metricas(pred).drop(index="total")
-    campanias = sorted(series)
-    normal = campanias[campanias.index(peor) + 1] if peor != campanias[-1] else campanias[-1 - 1]
-    h = {
-        c: (
-            features.query("depto_id == @HERO_DEPTO and campania == @c").iloc[0],
-            pred.query("depto_id == @HERO_DEPTO and campania == @c").iloc[0],
-        )
-        for c in (peor, normal)
-    }
+    cerradas = sorted(pred["campania"].unique())  # con rinde oficial: las únicas con hero
+    i = cerradas.index(peor)
+    normal = cerradas[i + 1] if i + 1 < len(cerradas) else cerradas[i - 1]
+    h = {}
+    for c in (peor, normal):
+        f_h = features.query("depto_id == @HERO_DEPTO and campania == @c")
+        p_h = pred.query("depto_id == @HERO_DEPTO and campania == @c")
+        if f_h.empty or p_h.empty:
+            raise SystemExit(f"{HERO_DEPTO} no tiene features o rinde en {c}: cambiá HERO_DEPTO")
+        h[c] = (f_h.iloc[0], p_h.iloc[0])
 
     guardar_json(
         WEB / "src" / "lib" / "data" / f"validacion_{args.cultivo}.json",

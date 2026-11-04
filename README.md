@@ -13,7 +13,7 @@ An in-season monitor for Argentina's humid Pampas (152 soybean and ~150 wheat de
 
 ## Results 📊
 
-Leave-one-campaign-out validation on 932 observations (137 departments, 7 campaigns 2018/19–2024/25) against MAGyP departmental yield. The baseline is the department's historical mean without the evaluated campaign.
+Leave-one-campaign-out validation on 932 observations (137 departments, 7 campaigns 2018/19–2024/25) against MAGyP departmental yield. The baseline is the department's historical mean without the evaluated campaign. Ridge was chosen because it scored best on these same campaigns, so its gain is slightly optimistic.
 
 | | Model RMSE (Ridge) | Model RMSE (HGB) | Baseline RMSE | Ridge gain | HGB gain |
 |---|---|---|---|---|---|
@@ -44,7 +44,6 @@ Leave-one-campaign-out validation on 932 observations (137 departments, 7 campai
 | Open-Meteo | Daily weather (ERA5) | Public API, no account |
 | IGN — departments | Official polygons; the INDEC code gives an exact join with MAGyP | `ign_departamento.zip` |
 
-Google Earth Engine (`src/agro/gee.py`) is kept from v1 to compare both sources later; the current pipeline does not use it. v1 was blocked by GEE's monthly noncommercial quota, and CDSE unblocked it.
 
 ## Design decisions 🧭
 
@@ -85,8 +84,7 @@ agro-monitor-pampa/
 │   ├── fenologia.py          # Whittaker, features, bootstrap CIs
 │   ├── anomalia.py           # campaign, anomaly and anomaly-to-date
 │   ├── clima.py              # Open-Meteo and window features
-│   ├── rendimiento.py        # model and leave-one-campaign-out validation
-│   └── gee.py                # v1 GEE extraction (kept for comparison)
+│   └── rendimiento.py        # model and leave-one-campaign-out validation
 ├── scripts/                  # 01 geometries · 02 sampling · 03 MAGyP · 04 extraction · 05 features · 06 weather · 07 model · 08 site export · 09 hero images · 10 share thumbnail
 ├── data/processed/           # pipeline parquet/geojson; the site export reads them
 ├── data/raw/                 # MNC, raw CDSE output (not committed)

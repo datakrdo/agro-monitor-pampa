@@ -12,12 +12,10 @@ import yaml
 RAIZ = Path(__file__).resolve().parents[2]
 CONFIG_DIR = RAIZ / "config"
 
-# worldcereal_clase es opcional: solo lo usa gee.py (v1). Opcionales: region, tmax_calor,
+# Opcionales: region, tmax_calor,
 # mnc_clase_campania, notas (ver el encabezado de cultivos.yaml).
 _CAMPOS_CULTIVO = {
     "nombre",
-    "mes_inicio",
-    "mes_fin",
     "cruza_anio",
     "ext_mes_inicio",
     "ext_mes_fin",

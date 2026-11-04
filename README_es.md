@@ -13,7 +13,7 @@ Dashboard de monitoreo en campaña para la pampa húmeda (152 departamentos con 
 
 ## Resultados 📊
 
-Validación leave-one-campaign-out sobre 932 observaciones (137 departamentos, 7 campañas 2018/19–2024/25), contra el rinde departamental del MAGyP. La línea base es el promedio histórico del departamento sin la campaña evaluada.
+Validación leave-one-campaign-out sobre 932 observaciones (137 departamentos, 7 campañas 2018/19–2024/25), contra el rinde departamental del MAGyP. La línea base es el promedio histórico del departamento sin la campaña evaluada. Se eligió Ridge porque fue el que mejor puntuó en estas mismas campañas, así que su mejora es algo optimista.
 
 | | RMSE modelo (Ridge) | RMSE modelo (HGB) | RMSE base | Mejora Ridge | Mejora HGB |
 |---|---|---|---|---|---|
@@ -44,7 +44,6 @@ Validación leave-one-campaign-out sobre 932 observaciones (137 departamentos, 7
 | Open-Meteo | Clima diario (ERA5) | API pública sin cuenta |
 | IGN — departamentos | Polígonos oficiales; el código INDEC hace el join exacto con MAGyP | `ign_departamento.zip` |
 
-Google Earth Engine (`src/agro/gee.py`, `scripts/02_extraer_series.py`) se conserva de la v1 para poder comparar las dos fuentes más adelante; el pipeline actual no lo usa. La v1 quedó bloqueada por la cuota mensual noncommercial de GEE, y CDSE la destrabó.
 
 ## Decisiones de diseño 🧭
 
@@ -85,8 +84,7 @@ agro-monitor-pampa/
 │   ├── fenologia.py          # Whittaker, features, IC por bootstrap
 │   ├── anomalia.py           # campaña, anomalía y anomalía a la fecha
 │   ├── clima.py              # Open-Meteo y features de ventana
-│   ├── rendimiento.py        # modelo y validación leave-one-campaign-out
-│   └── gee.py                # extracción GEE de la v1 (se conserva para comparar)
+│   └── rendimiento.py        # modelo y validación leave-one-campaign-out
 ├── scripts/                  # 01 geometrías · 02 muestreo · 03 MAGyP · 04 extracción · 05 features · 06 clima · 07 modelo · 08 export al sitio · 09 imágenes del hero · 10 miniatura
 ├── data/processed/           # parquet/geojson del pipeline; el export al sitio los lee
 ├── data/raw/                 # MNC, salidas crudas de CDSE (no se commitean)

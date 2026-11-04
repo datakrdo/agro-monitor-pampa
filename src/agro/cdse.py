@@ -14,20 +14,16 @@ from pathlib import Path
 
 import openeo
 import pandas as pd
-from openeo.processes import array_create, array_element, tanh
+from openeo.processes import array_create, array_element
 
 CDSE = "openeo.dataspace.copernicus.eu"
 # SCL: 0 sin dato, 1 saturado, 3 sombra de nube, 8-9 nube media/alta, 10 cirro.
 SCL_INVALIDO = (0, 1, 3, 8, 9, 10)
 BANDAS_INDICE = {
     "NDVI": ["B04", "B08"],
-    "EVI": ["B02", "B04", "B08"],
     "NDRE": ["B05", "B08"],
-    "KNDVI": ["B04", "B08"],
 }
-INDICES_S2 = [
-    "NDVI"
-]  # los que extrae la corrida; ["NDVI", "EVI", "NDRE", "KNDVI"] pide todos (más bandas = más créditos)
+INDICES_S2 = ["NDVI"]  # los que extrae la corrida; sumar "NDRE" pide más bandas (más créditos)
 
 
 def conectar() -> openeo.Connection:
@@ -62,14 +58,9 @@ def _bbox(puntos: pd.DataFrame, margen: float = 0.01) -> dict:
 def _formula(indice: str, d):
     """Fórmula de cada índice; `d` es el vector de bandas cargadas (reflectancia x10000)."""
     b = lambda n: array_element(d, label=n) / 10000
-    ndvi = lambda: (b("B08") - b("B04")) / (b("B08") + b("B04"))
     return {
-        "NDVI": ndvi,
-        "EVI": lambda: 2.5 * (b("B08") - b("B04")) / (b("B08") + 6 * b("B04") - 7.5 * b("B02") + 1),
+        "NDVI": lambda: (b("B08") - b("B04")) / (b("B08") + b("B04")),
         "NDRE": lambda: (b("B08") - b("B05")) / (b("B08") + b("B05")),
-        "KNDVI": lambda: tanh(
-            ndvi() * ndvi()
-        ),  # kNDVI (Camps-Valls 2021) con sigma = 0.5*(nir+rojo)
     }[indice]()
 
 
@@ -117,7 +108,9 @@ def extraer(cubo, salida: Path) -> pd.DataFrame:
     salida = Path(salida)
     if not salida.exists():
         salida.parent.mkdir(parents=True, exist_ok=True)
-        job = cubo.execute_batch(outputfile=salida, out_format="JSON", title=salida.stem)
+        parcial = salida.with_suffix(".part")  # si se corta la bajada no queda un JSON a medias
+        job = cubo.execute_batch(outputfile=parcial, out_format="JSON", title=salida.stem)
+        parcial.replace(salida)
         print("créditos:", job.describe().get("usage", {}).get("credits"))
     return _json_a_df(json.loads(salida.read_text()))
 

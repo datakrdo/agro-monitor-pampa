@@ -18,7 +18,7 @@ from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from agro.anomalia import MIN_PUNTOS  # noqa: F401  (lo usan los .query("... @MIN_PUNTOS"))
+from agro.anomalia import MIN_PUNTOS
 
 FEATURES = ["integral", "pico", "doy_pico", "lluvia_mm", "dias_calor", "balance_mm", "tmax_media"]
 MODELOS = {
@@ -36,11 +36,8 @@ def armar_tabla(features: pd.DataFrame, clima: pd.DataFrame, magyp: pd.DataFrame
         columns={"rendimiento_kgxha": "y"}
     )
     t = features.merge(clima, on=["depto_id", "campania"]).merge(y, on=["depto_id", "campania"])
-    return (
-        t.dropna(subset=FEATURES + ["y"])
-        .query("y > 0 and n_puntos >= @MIN_PUNTOS")
-        .reset_index(drop=True)
-    )
+    t = t.dropna(subset=FEATURES + ["y"])
+    return t[(t["y"] > 0) & (t["n_puntos"] >= MIN_PUNTOS)].reset_index(drop=True)
 
 
 def loco(tabla: pd.DataFrame, modelo, cols: list[str] = FEATURES) -> pd.DataFrame:
@@ -87,13 +84,12 @@ def pronosticar(
     cols: list[str] = FEATURES,
 ) -> pd.DataFrame:
     """Estima las campañas que tienen features y clima pero todavía no rinde
-    MAGyP, entrenando con todas las de `tabla`. Mismas columnas que `loco`, con `y` NaN."""
+    MAGyP, entrenando con todas las de `tabla`. Mismas columnas que `loco`, con `y` NaN.
+    Solo campañas con la ventana completa (`dias` como las de entrenamiento): con la
+    ventana a medias los acumulados no son comparables y el modelo diría "mala" por falta de tiempo."""
     t = features.merge(clima, on=["depto_id", "campania"])
-    t = (
-        t[~t["campania"].isin(tabla["campania"])]
-        .dropna(subset=cols)
-        .query("n_puntos >= @MIN_PUNTOS")
-    )
+    t = t[~t["campania"].isin(tabla["campania"])].dropna(subset=cols)
+    t = t[(t["n_puntos"] >= MIN_PUNTOS) & (t["dias"] >= tabla["dias"].min())]
     return _estimar(tabla, t, modelo, cols)
 
 

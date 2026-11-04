@@ -7,17 +7,6 @@ from __future__ import annotations
 
 import pandas as pd
 
-
-def ventana_campania(cultivo_cfg: dict, anio_inicio: int) -> tuple[pd.Timestamp, pd.Timestamp]:
-    """Rango [inicio, fin) de la campaña que arranca en `anio_inicio`."""
-    inicio = pd.Timestamp(year=anio_inicio, month=cultivo_cfg["mes_inicio"], day=1)
-    anio_fin = anio_inicio + 1 if cultivo_cfg["cruza_anio"] else anio_inicio
-    fin = pd.Timestamp(year=anio_fin, month=cultivo_cfg["mes_fin"], day=1) + pd.offsets.MonthBegin(
-        1
-    )
-    return inicio, fin
-
-
 MIN_PUNTOS = 30  # con menos píxeles de cultivo la mediana del depto es ruido
 UMBRAL_ANOMALIA = 5.0  # %: por debajo de este desvío contra la mediana histórica la campaña se muestra como "normal"
 
@@ -36,60 +25,6 @@ def etiqueta_campania(anio_inicio: int) -> str:
     incluso para cultivos que no cruzan el año calendario (ej. trigo
     2023/2024 = sembrado en 2023)."""
     return f"{anio_inicio}/{anio_inicio + 1}"
-
-
-def asignar_campania(fecha: pd.Timestamp, cultivo_cfg: dict) -> str | None:
-    """A qué campaña pertenece un compuesto mensual, o None si el mes
-    cae fuera de la ventana del cultivo (ej. invierno para soja)."""
-    for anio_inicio in (fecha.year, fecha.year - 1):
-        inicio, fin = ventana_campania(cultivo_cfg, anio_inicio)
-        if inicio <= fecha < fin:
-            return etiqueta_campania(anio_inicio)
-    return None
-
-
-def calcular_features(series: pd.DataFrame, cultivo_cfg: dict) -> pd.DataFrame:
-    """series: columnas depto_id, fecha, ndvi (una fila por depto x mes).
-    Devuelve una fila por depto_id x campania con:
-      - ndvi_integral: suma de los compuestos mensuales de la ventana,
-        proxy de biomasa acumulada (correlaciona con rendimiento).
-      - ndvi_pico / mes_pico: máximo de la campaña y cuándo ocurrió.
-    """
-    df = series.copy()
-    df["campania"] = df["fecha"].apply(lambda f: asignar_campania(f, cultivo_cfg))
-    df = df.dropna(subset=["campania", "ndvi"])
-
-    agg = (
-        df.groupby(["depto_id", "campania"])["ndvi"]
-        .agg(ndvi_integral="sum", ndvi_pico="max")
-        .reset_index()
-    )
-    idx_pico = df.groupby(["depto_id", "campania"])["ndvi"].idxmax()
-    agg["mes_pico"] = df.loc[idx_pico, "fecha"].dt.month.values
-    return agg
-
-
-def calcular_anomalia(features: pd.DataFrame) -> pd.DataFrame:
-    """Agrega anomalia_pct y percentil_historico comparando cada
-    campaña contra las demás campañas del mismo departamento.
-
-    Con ~8-9 campañas por depto esto es una foto de baja potencia
-    estadística: se reporta como diferencia % contra la mediana
-    histórica (leave-one-out), no como z-score.
-    """
-    out = features.copy()
-    out["anomalia_pct"] = pd.NA
-    out["percentil_historico"] = pd.NA
-
-    for _, grupo in features.groupby("depto_id"):
-        valores = grupo["ndvi_integral"]
-        out.loc[valores.index, "percentil_historico"] = valores.rank(pct=True) * 100
-        for idx, valor in valores.items():
-            resto = valores.drop(idx)
-            if len(resto) == 0 or resto.median() == 0:
-                continue
-            out.loc[idx, "anomalia_pct"] = (valor - resto.median()) / resto.median() * 100
-    return out
 
 
 def anomalia_a_la_fecha(

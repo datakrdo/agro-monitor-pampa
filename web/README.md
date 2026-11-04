@@ -7,3 +7,5 @@ uv run python scripts/08_exportar_web.py --cultivo soja   # run from the repo ro
 npm ci && npm run dev      # http://localhost:5173
 npm run check && npx vitest --run && npm run build && npx playwright test
 ```
+
+Pinned on purpose: TypeScript 6 (svelte-check and SvelteKit need the JS API that TS 7 does not ship yet) and `@observablehq/plot` ~0.6.17 (0.6.18 dropped its `types` export, so `npm run check` fails). Revisit both.

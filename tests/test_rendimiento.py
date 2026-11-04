@@ -87,13 +87,16 @@ def test_resumen_validacion_separa_la_peor_campania():
     assert r["n_mala"] == 2 and r["precision_mala"] == 1.0 and r["mala_era_buena"] == 0.0
 
 
-def test_pronosticar_estima_solo_campanias_sin_rinde():
-    t = _tabla()
-    nueva = t[t["campania"] == "C0"].assign(campania="C9", n_puntos=999).drop(columns="y")
-    p = rendimiento.pronosticar(t, nueva, nueva[["depto_id", "campania"]], MODELOS["ridge"], COLS)
+def test_pronosticar_estima_solo_campanias_sin_rinde_y_con_ventana_completa():
+    t = _tabla().assign(dias=180)
+    nueva = t[t["campania"] == "C0"].assign(campania="C9", n_puntos=999).drop(columns=["y", "dias"])
+    clima = nueva[["depto_id", "campania"]].assign(dias=180)
+    p = rendimiento.pronosticar(t, nueva, clima, MODELOS["ridge"], COLS)
     assert set(p["campania"]) == {"C9"} and len(p) == 20 and p["y"].isna().all()
-    assert (
-        rendimiento.pronosticar(
-            t, t.assign(n_puntos=999), t[["depto_id", "campania"]], MODELOS["ridge"], COLS
-        )
+    # campaña que ya tiene rinde: no se pronostica
+    viejas = t.assign(n_puntos=999).drop(columns=["y", "dias"])
+    assert rendimiento.pronosticar(
+        t, viejas, t[["depto_id", "campania", "dias"]], MODELOS["ridge"], COLS
     ).empty
+    # ventana a medias (campaña en curso): no se estima
+    assert rendimiento.pronosticar(t, nueva, clima.assign(dias=90), MODELOS["ridge"], COLS).empty

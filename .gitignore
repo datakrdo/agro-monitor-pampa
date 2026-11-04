@@ -227,3 +227,8 @@ data/raw/
 data/processed/hero_*.tif
 data/processed/series_exp/
 .wrangler/
+
+# derivados que CI no lee (se regeneran con 06/07); si ya estaban versionados: git rm --cached
+data/processed/rendimiento_metricas_*.parquet
+data/processed/clima_soja_*.parquet
+data/processed/clima_trigo_*.parquet
