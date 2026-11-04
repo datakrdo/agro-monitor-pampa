@@ -20,16 +20,16 @@
 	const L = $derived(idioma());
 	const T = {
 		es: {
-			titulo: '¿Viene buena o mala la campaña de soja? · Agro Monitor Pampa',
-			descripcion: 'Un satélite mide el verdor de la soja en cada departamento de la pampa húmeda y lo compara con su historia para anticipar si la campaña viene buena o mala.',
+			titulo: '¿Cómo viene la campaña? · Agro Monitor Pampa',
+			descripcion: 'Un satélite mide el verdor de la soja y el trigo en cada departamento de la pampa húmeda y lo compara con su historia para anticipar si la campaña viene buena o mala.',
 			locale: 'es_AR', nav: ['Monitor', '¿Cuánto acierta?', 'Cómo funciona', 'Código'], secciones: 'Secciones', idioma: 'Idioma',
 			fuentes: 'Fuentes.',
 			fuentesTexto: 'Imágenes Sentinel-2 L2A (Copernicus Data Space, ESA) · máscara de cultivos: Mapa Nacional de Cultivos, INTA · rendimientos: estimaciones agrícolas, MAGyP · clima: reanálisis ERA5 vía Open-Meteo · mapa base: OpenFreeMap, © OpenMapTiles, datos de OpenStreetMap.',
 			pie: (g: string) => `Proyecto de portfolio. Datos generados el ${g}. Los rindes y las campañas son los publicados por las fuentes; las estimaciones son de este proyecto y no una recomendación comercial.`
 		},
 		en: {
-			titulo: 'Is this soybean campaign going well or badly? · Agro Monitor Pampa',
-			descripcion: 'A satellite measures how green the soybeans are in each department of the humid Pampas and compares it with its history to anticipate whether the campaign is going well or badly.',
+			titulo: 'How is the campaign going? · Agro Monitor Pampa',
+			descripcion: 'A satellite measures how green soybeans and wheat are in each department of the humid Pampas and compares it with its history to anticipate whether the campaign is going well or badly.',
 			locale: 'en_US', nav: ['Monitor', 'How accurate is it?', 'How it works', 'Code'], secciones: 'Sections', idioma: 'Language',
 			fuentes: 'Sources.',
 			fuentesTexto: 'Sentinel-2 L2A imagery (Copernicus Data Space, ESA) · crop mask: National Crop Map (Mapa Nacional de Cultivos), INTA · yields: agricultural estimates, MAGyP · weather: ERA5 reanalysis via Open-Meteo · basemap: OpenFreeMap, © OpenMapTiles, OpenStreetMap data.',

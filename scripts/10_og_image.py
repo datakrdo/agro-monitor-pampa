@@ -43,7 +43,7 @@ def main() -> None:
     d = ImageDraw.Draw(lienzo, "RGBA")
     d.rectangle((0, H - 250, W, H), fill=(18, 28, 20, 218))
     d.rectangle((W // 2 - 1, 0, W // 2 + 1, H - 250), fill=(255, 255, 255, 235))
-    titulo = "¿Viene buena o mala la campaña de soja?"
+    titulo = "¿Cómo viene la campaña?"
     tam = 54
     while (
         d.textlength(titulo, font=ImageFont.truetype(str(FUENTES / "DejaVuSerif-Bold.ttf"), tam))

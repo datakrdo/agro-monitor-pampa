@@ -145,7 +145,7 @@ Cubre campaña y anomalía a la fecha, muestreo (puntos dentro de la clase, semi
 - [ ] Cebada: separarla del trigo (estrategias propuestas, en análisis)
 - [ ] Workflow mensual de actualización de la campaña en curso (GitHub Actions)
 - [x] Sitio estático (SvelteKit + MapLibre) que reemplaza al dashboard de Streamlit, con selector soja/trigo y lluvia acumulada por departamento
-- [ ] Deploy en Cloudflare Pages (`.github/workflows/deploy.yml`; faltan los secrets `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`)
+- [x] Deploy en Cloudflare Pages en cada push a `main` (`.github/workflows/deploy.yml`, secrets `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`)
 - [ ] Humedad de suelo (NASA SMAP L4) como feature del modelo
 - [ ] Comparación con la extracción vía GEE
 

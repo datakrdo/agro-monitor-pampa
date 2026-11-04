@@ -38,16 +38,16 @@
 	<div class="contenedor rejilla">
 		<div class="texto">
 			{#if L === 'en'}
-				<p class="ojo">Soybeans · Humid Pampas · Sentinel-2</p>
-				<h1>Is this soybean campaign going well or badly?</h1>
+				<p class="ojo">Soybeans and wheat · Humid Pampas · Sentinel-2</p>
+				<h1>How is the campaign going?</h1>
 				<p class="lede">
-					A satellite measures how green the soybeans are in each department and compares it with that department’s own history. When a campaign
+					A satellite measures how green soybeans and wheat are in each department and compares it with that department’s own history. When a campaign
 					is poorer than others, it shows months before harvest.
 				</p>
 				<p class="dato">
 					<strong>{f.pct(sequia.deptos_en_rojo)}</strong>
 					<span>
-						of departments were already below normal on {f.fechaLarga(fechaDecada(sequia.campania, sequia.fecha))}. The {camp(sequia.campania)} campaign
+						of soybean departments were already below normal on {f.fechaLarga(fechaDecada(sequia.campania, sequia.fecha))}. The {camp(sequia.campania)} campaign
 						ended with yields {f.pct(Math.abs(sequia.desvio_medio))} below each department’s average.
 					</span>
 				</p>
@@ -56,16 +56,16 @@
 					<a class="boton secundario" href="#funciona">How accurate is it?</a>
 				</div>
 			{:else}
-				<p class="ojo">Soja · Pampa húmeda · Sentinel-2</p>
-				<h1>¿Viene buena o mala la campaña de soja?</h1>
+				<p class="ojo">Soja y trigo · Pampa húmeda · Sentinel-2</p>
+				<h1>¿Cómo viene la campaña?</h1>
 				<p class="lede">
-					Un satélite mide cuánto verde tiene la soja de cada departamento y lo compara con su propia historia. Cuando una campaña viene más
+					Un satélite mide cuánto verde tienen la soja y el trigo de cada departamento y lo compara con su propia historia. Cuando una campaña viene más
 					pobre que otras, se nota meses antes de la cosecha.
 				</p>
 				<p class="dato">
 					<strong>{f.pct(sequia.deptos_en_rojo)}</strong>
 					<span>
-						de los departamentos ya estaba por debajo de lo normal el {f.fechaLarga(fechaDecada(sequia.campania, sequia.fecha))}. La campaña
+						de los departamentos con soja ya estaba por debajo de lo normal el {f.fechaLarga(fechaDecada(sequia.campania, sequia.fecha))}. La campaña
 						{camp(sequia.campania)} cerró con rindes {f.pct(Math.abs(sequia.desvio_medio))} por debajo del promedio de cada
 						departamento.
 					</span>

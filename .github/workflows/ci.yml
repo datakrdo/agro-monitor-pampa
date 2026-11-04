@@ -41,6 +41,7 @@ jobs:
 
       - run: uv sync --locked
       - run: uv run python scripts/08_exportar_web.py --cultivo soja
+      - run: uv run python scripts/08_exportar_web.py --cultivo trigo
 
       - uses: actions/setup-node@v5
         with:

@@ -147,7 +147,7 @@ Covers campaign and anomaly-to-date, sampling (points inside the class, fixed se
 - [ ] Wheat 2025: needs INTA's `MNC_inv25.tif` (not published yet), then ~150 departments to extract
 - [ ] Barley: separate it from wheat (strategies under analysis)
 - [ ] Monthly refresh workflow for the running campaign (GitHub Actions)
-- [ ] Deploy to Cloudflare Pages (`.github/workflows/deploy.yml`; the secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are missing)
+- [x] Deploy to Cloudflare Pages on every push to `main` (`.github/workflows/deploy.yml`, secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`)
 - [ ] Soil moisture (NASA SMAP L4) as a model feature
 - [ ] Comparison with the GEE extraction
 

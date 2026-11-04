@@ -75,7 +75,9 @@ def lluvia_acumulada(diario: pd.DataFrame, curvas: pd.DataFrame) -> pd.DataFrame
         d = diario[diario["fecha"] >= g["fecha"].min()].sort_values(["depto_id", "fecha"])
         d = d.assign(mm=d.groupby("depto_id")["precipitation_sum"].cumsum())
         fechas = g[["campania", "depto_id", "decada", "fecha"]].drop_duplicates()
-        salida.append(fechas.merge(d[["depto_id", "fecha", "mm"]], on=["depto_id", "fecha"], how="left"))
+        salida.append(
+            fechas.merge(d[["depto_id", "fecha", "mm"]], on=["depto_id", "fecha"], how="left")
+        )
     return pd.concat(salida, ignore_index=True).drop(columns="fecha")
 
 

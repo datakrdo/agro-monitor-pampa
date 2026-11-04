@@ -6,7 +6,7 @@ test('la página carga, el mapa se dibuja y buscar un departamento actualiza el 
 	page.on('console', (m) => m.type() === 'error' && !m.text().includes('tiles.openfreemap.org') && errores.push(m.text()));
 
 	await page.goto('/');
-	await expect(page.getByRole('heading', { level: 1 })).toContainText('¿Viene buena o mala la campaña de soja?');
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('¿Cómo viene la campaña?');
 	await expect(page.locator('.hero img.base')).toBeVisible();
 
 	// El mapa y los datos se cargan al montar el monitor.
@@ -35,7 +35,7 @@ test('el gráfico de acierto y las tablas alternativas están', async ({ page })
 test('la versión en inglés y el toggle de idioma', async ({ page }) => {
 	await page.goto('/en/');
 	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-	await expect(page.getByRole('heading', { level: 1 })).toContainText('Is this soybean campaign going well or badly?');
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('How is the campaign going?');
 	await expect(page.locator('#monitor canvas.maplibregl-canvas')).toBeVisible({ timeout: 20_000 });
 	await expect(page.locator('#monitor .titular')).toContainText('Running');
 
@@ -47,7 +47,7 @@ test('la versión en inglés y el toggle de idioma', async ({ page }) => {
 	await page.getByRole('link', { name: 'ES', exact: true }).click();
 	await expect(page).toHaveURL(/\/$/);
 	await expect(page.locator('html')).toHaveAttribute('lang', 'es');
-	await expect(page.getByRole('heading', { level: 1 })).toContainText('¿Viene buena o mala la campaña de soja?');
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('¿Cómo viene la campaña?');
 	await expect(page.locator('.panel h3')).toHaveText('Pergamino');
 	await page.getByRole('link', { name: 'EN', exact: true }).click();
 	await expect(page).toHaveURL(/\/en\/$/);
