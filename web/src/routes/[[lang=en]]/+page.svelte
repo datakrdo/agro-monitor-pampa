@@ -7,7 +7,8 @@
 	import hero from '../../lib/data/hero_imagenes.json';
 	import validacionSoja from '../../lib/data/validacion_soja.json';
 	import validacionTrigo from '../../lib/data/validacion_trigo.json';
-	import { monitor } from '../../lib/estado.svelte';
+	import { onMount } from 'svelte';
+import { ciclarTema, iniciarTema, monitor, tema } from '../../lib/estado.svelte';
 	import type { HeroImagenes, Validacion } from '../../lib/datos';
 	import { idioma } from '../../lib/i18n';
 
@@ -22,7 +23,7 @@
 		es: {
 			titulo: '¿Cómo viene la campaña? · Agro Monitor Pampa',
 			descripcion: 'Un satélite mide el verdor de la soja y el trigo en cada departamento de la pampa húmeda y lo compara con su historia para anticipar si la campaña viene buena o mala.',
-			locale: 'es_AR', nav: ['Monitor', '¿Cuánto acierta?', 'Cómo funciona', 'Código'], secciones: 'Secciones', idioma: 'Idioma',
+			locale: 'es_AR', nav: ['Monitor', '¿Cuánto acierta?', 'Cómo funciona', 'Código'], secciones: 'Secciones', idioma: 'Idioma', tema: 'Tema', modos: { sistema: 'Auto', claro: 'Claro', oscuro: 'Oscuro' },
 			fuentes: 'Fuentes.',
 			fuentesTexto: 'Imágenes Sentinel-2 L2A (Copernicus Data Space, ESA) · máscara de cultivos: Mapa Nacional de Cultivos, INTA · rendimientos: estimaciones agrícolas, MAGyP · clima: reanálisis ERA5 vía Open-Meteo · mapa base: OpenFreeMap, © OpenMapTiles, datos de OpenStreetMap.',
 			pie: (g: string) => `Proyecto de portfolio. Datos generados el ${g}. Los rindes y las campañas son los publicados por las fuentes; las estimaciones son de este proyecto y no una recomendación comercial.`
@@ -30,14 +31,15 @@
 		en: {
 			titulo: 'How is the campaign going? · Agro Monitor Pampa',
 			descripcion: 'A satellite measures how green soybeans and wheat are in each department of the humid Pampas and compares it with its history to anticipate whether the campaign is going well or badly.',
-			locale: 'en_US', nav: ['Monitor', 'How accurate is it?', 'How it works', 'Code'], secciones: 'Sections', idioma: 'Language',
+			locale: 'en_US', nav: ['Monitor', 'How accurate is it?', 'How it works', 'Code'], secciones: 'Sections', idioma: 'Language', tema: 'Theme', modos: { sistema: 'Auto', claro: 'Light', oscuro: 'Dark' },
 			fuentes: 'Sources.',
 			fuentesTexto: 'Sentinel-2 L2A imagery (Copernicus Data Space, ESA) · crop mask: National Crop Map (Mapa Nacional de Cultivos), INTA · yields: agricultural estimates, MAGyP · weather: ERA5 reanalysis via Open-Meteo · basemap: OpenFreeMap, © OpenMapTiles, OpenStreetMap data.',
 			pie: (g: string) => `Portfolio project. Data generated on ${g}. Yields and campaigns are as published by the sources; the estimates are this project’s own and not commercial advice.`
 		}
 	};
 	const t = $derived(T[L]);
-	// El servidor fija <html lang>; al cambiar de idioma sin recargar hay que seguirlo a mano.
+	onMount(iniciarTema);
+// El servidor fija <html lang>; al cambiar de idioma sin recargar hay que seguirlo a mano.
 	$effect(() => {
 		document.documentElement.lang = L;
 	});
@@ -69,6 +71,7 @@
 			<a href="#como">{t.nav[2]}</a>
 			<a href={REPO}>{t.nav[3]}</a>
 		</nav>
+		<button type="button" class="tema" onclick={ciclarTema} aria-label="{t.tema}: {t.modos[tema.modo]}">{t.modos[tema.modo]}</button>
 		<div class="idioma" role="group" aria-label={t.idioma}>
 			<a href="/" hreflang="es" lang="es" aria-current={L === 'es' ? 'true' : undefined}>ES</a>
 			<a href="/en/" hreflang="en" lang="en" aria-current={L === 'en' ? 'true' : undefined}>EN</a>
@@ -97,9 +100,11 @@
 		position: sticky;
 		top: 0;
 		z-index: 10;
-		background: rgb(250 249 246 / 0.92);
-		backdrop-filter: blur(8px);
+		background: var(--vidrio);
+		backdrop-filter: blur(20px) saturate(180%);
+		-webkit-backdrop-filter: blur(20px) saturate(180%);
 		border-bottom: 1px solid var(--line);
+		box-shadow: inset 0 1px 0 var(--luz);
 	}
 	.barra-in {
 		display: flex;
@@ -134,6 +139,54 @@
 			display: none;
 		}
 	}
+	.tema {
+		appearance: none;
+		position: relative;
+		flex: none;
+		min-width: 3.6rem;
+		padding: 0.25rem 0.65rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		background: transparent;
+		color: var(--ink-2);
+		font: 600 0.82rem var(--sans);
+		cursor: pointer;
+		touch-action: manipulation;
+		transition: transform 100ms ease-out, background-color 150ms ease;
+	}
+	.tema::after {
+		content: '';
+		position: absolute;
+		inset: -9px -4px;
+	}
+	.tema:hover {
+		background: var(--acento-claro);
+	}
+	.tema:active {
+		transform: scale(0.97);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.tema:active {
+			transform: none;
+		}
+	}
+	@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+		.barra {
+			background: var(--bg);
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+		}
+	}
+	@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+		.barra {
+			background: var(--bg);
+		}
+	}
+	@media (prefers-contrast: more) {
+		.barra {
+			border-bottom-color: var(--borde-fuerte);
+		}
+	}
 	.idioma {
 		display: flex;
 		border: 1px solid var(--line);
@@ -150,12 +203,12 @@
 	}
 	.idioma a[aria-current='true'] {
 		background: var(--ink);
-		color: #fff;
+		color: var(--bg);
 	}
 	.pie {
 		padding: 2rem 0 3rem;
 		border-top: 1px solid var(--line);
-		background: #f3f1ea;
+		background: var(--surface-2);
 		color: var(--muted);
 		font-size: 0.85rem;
 	}

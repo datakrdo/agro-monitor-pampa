@@ -1,7 +1,8 @@
 <script lang="ts">
 	import * as Plot from '@observablehq/plot';
-	import { COLOR, cuantil, type Clase } from '../clases';
-	import { fechaDecada, formatos } from '../formato';
+	import { colores, cuantil, type Clase } from '../clases';
+	import { tema } from '../estado.svelte';
+	import { fechaDecada, formatos, token } from '../formato';
 	import { idioma } from '../i18n';
 	import type { Monitor } from '../datos';
 
@@ -37,24 +38,25 @@
 	const tabla = $derived(filas(datos, depto, campania));
 
 	$effect(() => {
+		void tema.oscuro; // redibuja al cambiar de tema
 		const hasta = tabla.filter((r) => r.i <= decada && r.actual !== null);
 		const hoy = tabla[decada];
-		const color = clase === 'normal' || clase === 'pocos' || clase === 'sin_dato' ? '#5f6670' : COLOR[clase];
+		const color = clase === 'normal' || clase === 'pocos' || clase === 'sin_dato' ? token('--trazo-neutro') : colores(tema.oscuro)[clase];
 		const f = formatos(idioma());
 		const t = T[idioma()];
 		const g = Plot.plot({
 			width: ancho, height: 230, marginLeft: 36, marginRight: 12, marginBottom: 28,
-			style: { background: 'transparent', fontSize: '12px', fontFamily: 'inherit', color: '#646c75', overflow: 'visible' },
+			style: { background: 'transparent', fontSize: '12px', fontFamily: 'inherit', color: token('--muted'), overflow: 'visible' },
 			x: { type: 'utc', label: null, ticks: 'month', tickFormat: (d: Date) => f.mesCorto(d) },
 			y: { domain: [0, 1], label: null, grid: true, ticks: 5, tickFormat: (d: number) => f.dec(d) },
 			marks: [
-				Plot.areaY(tabla.filter((r) => r.p10 !== null), { x: 'fecha', y1: 'p10', y2: 'p90', fill: '#8a9099', fillOpacity: 0.2 }),
-				Plot.lineY(tabla.filter((r) => r.med !== null), { x: 'fecha', y: 'med', stroke: '#6b737c', strokeDasharray: '4 3', strokeWidth: 1.4 }),
+				Plot.areaY(tabla.filter((r) => r.p10 !== null), { x: 'fecha', y1: 'p10', y2: 'p90', fill: token('--graf-banda'), fillOpacity: 0.2 }),
+				Plot.lineY(tabla.filter((r) => r.med !== null), { x: 'fecha', y: 'med', stroke: token('--graf-mediana'), strokeDasharray: '4 3', strokeWidth: 1.4 }),
 				Plot.lineY(hasta, { x: 'fecha', y: 'actual', stroke: color, strokeWidth: 2.8 }),
-				hoy ? Plot.ruleX([hoy.fecha], { stroke: '#1b1f23', strokeOpacity: 0.35 }) : null,
-				hasta.length ? Plot.dot(hasta.slice(-1), { x: 'fecha', y: 'actual', r: 5, fill: color, stroke: '#fff', strokeWidth: 2 }) : null,
+				hoy ? Plot.ruleX([hoy.fecha], { stroke: token('--ink'), strokeOpacity: 0.35 }) : null,
+				hasta.length ? Plot.dot(hasta.slice(-1), { x: 'fecha', y: 'actual', r: 5, fill: color, stroke: token('--punto'), strokeWidth: 2 }) : null,
 				Plot.tip(hasta, Plot.pointerX({
-					x: 'fecha', y: 'actual',
+					x: 'fecha', y: 'actual', fill: token('--surface'), stroke: token('--borde-fuerte'),
 					title: (r: (typeof tabla)[number]) => `${f.fechaLarga(r.fecha, false)}\n${t.actual}: ${fmt(r.actual)}\n${t.tipico}: ${fmt(r.med)}`
 				}))
 			]
@@ -65,7 +67,7 @@
 
 <div bind:this={host} bind:clientWidth={ancho} class="curva" role="img" aria-label={t.aria}></div>
 <ul class="leyenda">
-	<li><span class="trazo" style:background={clase === 'mala' || clase === 'buena' ? COLOR[clase] : '#5f6670'}></span>{t.l1}</li>
+	<li><span class="trazo" style:background={clase === 'mala' || clase === 'buena' ? colores(tema.oscuro)[clase] : 'var(--trazo-neutro)'}></span>{t.l1}</li>
 	<li><span class="trazo punteado"></span>{t.l2}</li>
 	<li><span class="banda"></span>{t.l3}</li>
 </ul>
@@ -95,12 +97,12 @@
 		border-radius: 2px;
 	}
 	.punteado {
-		background: repeating-linear-gradient(90deg, #6b737c 0 4px, transparent 4px 7px);
+		background: repeating-linear-gradient(90deg, var(--graf-mediana) 0 4px, transparent 4px 7px);
 		height: 2px;
 	}
 	.banda {
 		width: 18px;
 		height: 10px;
-		background: rgb(138 144 153 / 0.25);
+		background: color-mix(in srgb, var(--graf-banda) 25%, transparent);
 	}
 </style>

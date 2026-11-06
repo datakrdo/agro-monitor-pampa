@@ -71,3 +71,22 @@ test('el selector de cultivo cambia a trigo y el panel muestra la lluvia acumula
 
 	expect(errores).toEqual([]);
 });
+
+test('el tema sigue al sistema, el botón cicla y se recuerda', async ({ page }) => {
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await page.goto('/');
+	const html = page.locator('html');
+	const boton = page.getByRole('button', { name: /^Tema:/ });
+	await expect(html).not.toHaveAttribute('data-tema', /.+/);
+	expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(20, 22, 19)');
+
+	await boton.click(); // Auto → Claro
+	await expect(html).toHaveAttribute('data-tema', 'claro');
+	await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(250, 249, 246)'); // espera la transición
+	await boton.click(); // → Oscuro
+	await expect(html).toHaveAttribute('data-tema', 'oscuro');
+
+	await page.reload();
+	await expect(html).toHaveAttribute('data-tema', 'oscuro');
+	await expect(page.locator('#monitor canvas.maplibregl-canvas')).toBeVisible({ timeout: 20_000 });
+});

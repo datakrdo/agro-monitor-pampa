@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clasificar, cuantil, veredicto } from './clases';
+import { clasificar, colores, cuantil, veredicto } from './clases';
 import { anomaliaPct, fechaDecada, fechaLarga, kgha, mesCorto, pct } from './formato';
 
 describe('clasificar', () => {
@@ -51,5 +51,15 @@ describe('formato', () => {
 		expect(pct(0.771)).toBe('77%');
 		expect(anomaliaPct(-12.44)).toBe('−12,4%');
 		expect(anomaliaPct(3)).toBe('+3,0%');
+	});
+});
+
+describe('colores', () => {
+	it('da un color por clase en cada tema y los temas difieren', () => {
+		for (const k of ['mala', 'normal', 'buena', 'pocos', 'sin_dato'] as const) {
+			expect(colores(false)[k]).toMatch(/^#[0-9a-f]{6}$/);
+			expect(colores(true)[k]).toMatch(/^#[0-9a-f]{6}$/);
+			expect(colores(true)[k]).not.toBe(colores(false)[k]);
+		}
 	});
 });

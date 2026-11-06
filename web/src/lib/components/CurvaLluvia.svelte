@@ -1,14 +1,14 @@
 <script lang="ts">
 	import * as Plot from '@observablehq/plot';
 	import { cuantil } from '../clases';
-	import { fechaDecada, formatos } from '../formato';
+	import { tema } from '../estado.svelte';
+	import { fechaDecada, formatos, token } from '../formato';
 	import { idioma } from '../i18n';
 	import type { Monitor } from '../datos';
 
 	let { datos, depto, campania, decada }: { datos: Monitor; depto: string; campania: string; decada: number } = $props();
 	let ancho = $state(420);
 	let host = $state<HTMLDivElement>();
-	const AZUL = '#2f6fa3';
 
 	const T = {
 		es: {
@@ -42,6 +42,8 @@
 	const dif = $derived(hoy?.actual != null && hoy.med ? 100 * (hoy.actual / hoy.med - 1) : null);
 
 	$effect(() => {
+		void tema.oscuro; // redibuja al cambiar de tema
+		const azul = token('--lluvia');
 		const hasta = tabla.filter((r) => r.i <= decada && r.actual !== null);
 		const tope = Math.max(10, ...tabla.map((r) => Math.max(r.p90 ?? 0, r.actual ?? 0)));
 		if (!host) return;
@@ -49,17 +51,17 @@
 		const t = T[idioma()];
 		const g = Plot.plot({
 			width: ancho, height: 170, marginLeft: 36, marginRight: 12, marginBottom: 28,
-			style: { background: 'transparent', fontSize: '12px', fontFamily: 'inherit', color: '#646c75', overflow: 'visible' },
+			style: { background: 'transparent', fontSize: '12px', fontFamily: 'inherit', color: token('--muted'), overflow: 'visible' },
 			x: { type: 'utc', label: null, ticks: 'month', tickFormat: (d: Date) => f.mesCorto(d) },
 			y: { domain: [0, tope], label: null, grid: true, ticks: 4 },
 			marks: [
-				Plot.areaY(tabla.filter((r) => r.p10 !== null), { x: 'fecha', y1: 'p10', y2: 'p90', fill: '#8a9099', fillOpacity: 0.2 }),
-				Plot.lineY(tabla.filter((r) => r.med !== null), { x: 'fecha', y: 'med', stroke: '#6b737c', strokeDasharray: '4 3', strokeWidth: 1.4 }),
-				Plot.lineY(hasta, { x: 'fecha', y: 'actual', stroke: AZUL, strokeWidth: 2.8 }),
-				hoy ? Plot.ruleX([hoy.fecha], { stroke: '#1b1f23', strokeOpacity: 0.35 }) : null,
-				hasta.length ? Plot.dot(hasta.slice(-1), { x: 'fecha', y: 'actual', r: 5, fill: AZUL, stroke: '#fff', strokeWidth: 2 }) : null,
+				Plot.areaY(tabla.filter((r) => r.p10 !== null), { x: 'fecha', y1: 'p10', y2: 'p90', fill: token('--graf-banda'), fillOpacity: 0.2 }),
+				Plot.lineY(tabla.filter((r) => r.med !== null), { x: 'fecha', y: 'med', stroke: token('--graf-mediana'), strokeDasharray: '4 3', strokeWidth: 1.4 }),
+				Plot.lineY(hasta, { x: 'fecha', y: 'actual', stroke: azul, strokeWidth: 2.8 }),
+				hoy ? Plot.ruleX([hoy.fecha], { stroke: token('--ink'), strokeOpacity: 0.35 }) : null,
+				hasta.length ? Plot.dot(hasta.slice(-1), { x: 'fecha', y: 'actual', r: 5, fill: azul, stroke: token('--punto'), strokeWidth: 2 }) : null,
 				Plot.tip(hasta, Plot.pointerX({
-					x: 'fecha', y: 'actual',
+					x: 'fecha', y: 'actual', fill: token('--surface'), stroke: token('--borde-fuerte'),
 					title: (r: (typeof tabla)[number]) => `${f.fechaLarga(r.fecha, false)}\n${t.actual}: ${f.dec(r.actual!)} mm\n${t.tipico}: ${r.med == null ? '–' : f.dec(r.med, 0, 0)} mm`
 				}))
 			]
@@ -117,15 +119,15 @@
 		width: 18px;
 		height: 3px;
 		border-radius: 2px;
-		background: #2f6fa3;
+		background: var(--lluvia);
 	}
 	.punteado {
-		background: repeating-linear-gradient(90deg, #6b737c 0 4px, transparent 4px 7px);
+		background: repeating-linear-gradient(90deg, var(--graf-mediana) 0 4px, transparent 4px 7px);
 		height: 2px;
 	}
 	.banda {
 		width: 18px;
 		height: 10px;
-		background: rgb(138 144 153 / 0.25);
+		background: color-mix(in srgb, var(--graf-banda) 25%, transparent);
 	}
 </style>

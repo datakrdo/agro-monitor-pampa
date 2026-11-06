@@ -111,7 +111,7 @@
 <style>
 	.hero {
 		padding: clamp(2rem, 5vw, 4rem) 0 clamp(2.5rem, 6vw, 4.5rem);
-		background: linear-gradient(180deg, #f3f1ea 0%, var(--bg) 100%);
+		background: linear-gradient(180deg, var(--surface-2) 0%, var(--bg) 100%);
 		border-bottom: 1px solid var(--line);
 	}
 	.rejilla {

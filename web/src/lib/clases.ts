@@ -10,13 +10,21 @@ export const ETIQUETA: Record<Idioma, Record<Clase, string>> = {
 };
 export const ICONO: Record<Clase, string> = { mala: '▼', normal: '●', buena: '▲', pocos: '◌', sin_dato: '–' };
 // Azul y rojo con un gris neutro en el medio: el par sigue leyéndose bien con daltonismo rojo-verde.
-export const COLOR: Record<Clase, string> = {
+const CLARO: Record<Clase, string> = {
 	mala: '#d03b3b',
 	normal: '#d9d7d0',
 	buena: '#3987e5',
 	pocos: '#ece9e1',
 	sin_dato: '#f3f2ee'
 };
+const OSCURO: Record<Clase, string> = {
+	mala: '#e5655f',
+	normal: '#5a5e56',
+	buena: '#5aa2f2',
+	pocos: '#2f332d',
+	sin_dato: '#262924'
+};
+export const colores = (oscuro: boolean): Record<Clase, string> => (oscuro ? OSCURO : CLARO);
 
 /** `anomalia` en % contra la mediana histórica a esa fecha; `np` = píxeles de cultivo muestreados. */
 export function clasificar(anomalia: number | null, np: number | null, umbral: number, minPuntos: number): Clase {

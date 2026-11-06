@@ -59,3 +59,6 @@ export const formatos = (i: Idioma) => ({
 	anomaliaPct: (x: number) => anomaliaPct(x, i),
 	kgha: (x: number) => kgha(x, i)
 });
+
+/** Valor actual de un token CSS (Plot y MapLibre no entienden `var()`). */
+export const token = (nombre: string): string => getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();

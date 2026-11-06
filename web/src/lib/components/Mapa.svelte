@@ -3,8 +3,9 @@
 	import type { FeatureCollection, Geometry, Polygon } from 'geojson';
 	import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 	import type { ExpressionSpecification, Map as MapaMapLibre } from 'maplibre-gl';
-	import { COLOR, ETIQUETA, ICONO, type Clase } from '../clases';
-	import { formatos } from '../formato';
+	import { colores, ETIQUETA, ICONO, type Clase } from '../clases';
+	import { esOscuro, tema } from '../estado.svelte';
+	import { formatos, token } from '../formato';
 	import { idioma } from '../i18n';
 
 	interface Props {
@@ -28,8 +29,10 @@
 		}
 	};
 	const t = $derived(T[L]);
-	const ESTILO = 'https://tiles.openfreemap.org/styles/positron';
-	const SIN_BASE = { version: 8 as const, sources: {}, layers: [{ id: 'fondo', type: 'background' as const, paint: { 'background-color': '#eceeea' } }] };
+	const ESTILOS = { claro: 'https://tiles.openfreemap.org/styles/positron', oscuro: 'https://tiles.openfreemap.org/styles/dark' };
+	// Si el mapa base no carga, la coropleta se ve igual sobre un fondo liso.
+	const sinBase = () => ({ version: 8 as const, sources: {}, layers: [{ id: 'fondo', type: 'background' as const, paint: { 'background-color': token('--mapa-fondo') } }] });
+	const cargarEstilo = (oscuro: boolean) => fetch(ESTILOS[oscuro ? 'oscuro' : 'claro']).then((r) => (r.ok ? r.json() : sinBase())).catch(sinBase);
 	const FUENTE = 'deptos';
 
 	let contenedor: HTMLDivElement;
@@ -37,6 +40,7 @@
 	let listo = $state(false);
 	let primera = true;
 	let anterior: string | null = null;
+	let estiloOscuro = false;
 
 	const duracion = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 700);
 
@@ -61,7 +65,7 @@
 		const c = document.createElement('canvas');
 		c.width = c.height = t;
 		const g = c.getContext('2d')!;
-		g.strokeStyle = '#8f8a7e';
+		g.strokeStyle = token('--hachura');
 		g.lineWidth = 1.2;
 		g.beginPath();
 		for (const d of [-t, 0, t]) {
@@ -77,8 +81,8 @@
 		(async () => {
 			const [maplibregl] = await Promise.all([import('maplibre-gl'), import('maplibre-gl/dist/maplibre-gl.css')]);
 			maplibregl.setWorkerUrl(workerUrl);
-			// Si el mapa base no carga, la coropleta se ve igual sobre un fondo liso.
-			const estilo = await fetch(ESTILO).then((r) => (r.ok ? r.json() : SIN_BASE)).catch(() => SIN_BASE);
+			estiloOscuro = esOscuro();
+			const estilo = await cargarEstilo(estiloOscuro);
 			if (destruido) return;
 			const m = new maplibregl.Map({
 				container: contenedor,
@@ -95,21 +99,35 @@
 			m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 			mapa = m;
 
-			m.on('load', () => {
-				m.addImage('hachurado', hachurado(), { pixelRatio: 2 });
+			// Fuente y capas propias; se vuelven a poner cada vez que cambia el estilo base (tema).
+			const capas = () => {
+				const pal = colores(estiloOscuro);
+				if (!m.hasImage('hachurado')) m.addImage('hachurado', hachurado(), { pixelRatio: 2 });
 				m.addSource(FUENTE, { type: 'geojson', data: geojson, promoteId: 'depto_id' });
 				const bajoEtiquetas = m.getStyle().layers.find((l) => l.type === 'symbol')?.id;
-				const color = ['match', ['feature-state', 'clase'], 'mala', COLOR.mala, 'normal', COLOR.normal, 'buena', COLOR.buena, 'pocos', COLOR.pocos, COLOR.sin_dato] as ExpressionSpecification;
+				// El estilo oscuro trae etiquetas gris 101 con halo negro: sobre la coropleta no se leen.
+				if (estiloOscuro) {
+					for (const l of m.getStyle().layers) {
+						if (l.type !== 'symbol' || !l.layout?.['text-field']) continue;
+						m.setPaintProperty(l.id, 'text-color', token('--ink-2'));
+						m.setPaintProperty(l.id, 'text-halo-color', token('--bg'));
+					}
+				}
+				const color = ['match', ['feature-state', 'clase'], 'mala', pal.mala, 'normal', pal.normal, 'buena', pal.buena, 'pocos', pal.pocos, pal.sin_dato] as ExpressionSpecification;
 				m.addLayer({ id: 'relleno', type: 'fill', source: FUENTE, paint: { 'fill-color': color, 'fill-opacity': 0.82 } }, bajoEtiquetas);
 				m.addLayer({ id: 'pocos', type: 'fill', source: FUENTE, paint: { 'fill-pattern': 'hachurado', 'fill-opacity': ['case', ['==', ['feature-state', 'clase'], 'pocos'], 1, 0] } }, bajoEtiquetas);
-				m.addLayer({ id: 'borde', type: 'line', source: FUENTE, paint: { 'line-color': '#ffffff', 'line-width': 0.6, 'line-opacity': 0.9 } }, bajoEtiquetas);
+				m.addLayer({ id: 'borde', type: 'line', source: FUENTE, paint: { 'line-color': token('--bg'), 'line-width': 0.6, 'line-opacity': 0.9 } }, bajoEtiquetas);
 				m.addLayer({
 					id: 'resalte', type: 'line', source: FUENTE,
 					paint: {
-						'line-color': '#1b1f23',
+						'line-color': token('--ink'),
 						'line-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, ['boolean', ['feature-state', 'hover'], false], 1.8, 0]
 					}
 				});
+			};
+
+			m.on('load', () => {
+				capas();
 
 				const aviso = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8, className: 'aviso-depto' });
 				let sobre: string | null = null;
@@ -144,6 +162,15 @@
 					const id = e.features?.[0]?.properties?.depto_id as string | undefined;
 					if (id) onelegir(id);
 				});
+				// Cambio de tema: el estilo nuevo trae sus propias capas, así que se re-arma todo y se re-aplican los estados.
+				m.on('style.load', () => {
+					capas();
+					for (const f of geojson.features) {
+						const id = f.properties?.depto_id as string;
+						m.setFeatureState({ source: FUENTE, id }, { clase: clases[id]?.clase ?? 'sin_dato' });
+					}
+					if (seleccionado) m.setFeatureState({ source: FUENTE, id: seleccionado }, { sel: true });
+				});
 				listo = true;
 			});
 		})();
@@ -160,6 +187,15 @@
 			const id = f.properties?.depto_id as string;
 			mapa.setFeatureState({ source: FUENTE, id }, { clase: clases[id]?.clase ?? 'sin_dato' });
 		}
+	});
+
+	// Tema claro/oscuro: cambia el mapa base y los colores de las capas.
+	$effect(() => {
+		const o = tema.oscuro;
+		if (!listo || !mapa || o === estiloOscuro) return;
+		estiloOscuro = o;
+		const m = mapa;
+		cargarEstilo(o).then((est) => estiloOscuro === o && m.setStyle(est));
 	});
 
 	// Contorno y zoom del departamento elegido; sin selección, vuelve a toda la región.
@@ -190,7 +226,7 @@
 		border: 1px solid var(--line);
 		border-radius: var(--radio);
 		overflow: hidden;
-		background: #eceeea;
+		background: var(--mapa-fondo);
 	}
 	.lienzo {
 		height: clamp(380px, 62vh, 600px);
@@ -207,6 +243,38 @@
 		padding: 0.5rem 0.7rem;
 		font: 0.85rem/1.35 var(--sans);
 		color: var(--ink);
+		background: var(--surface);
 		border-radius: 8px;
+	}
+	:global(.aviso-depto .maplibregl-popup-tip) {
+		border-top-color: var(--surface);
+		border-bottom-color: var(--surface);
+	}
+	:global(.mapa .maplibregl-ctrl-group) {
+		background: var(--surface);
+		border: 1px solid var(--borde-fuerte);
+		box-shadow: none;
+	}
+	:global(.mapa .maplibregl-ctrl-group button + button) {
+		border-top-color: var(--line);
+	}
+	/* Los íconos de MapLibre son negros: en oscuro se invierten. */
+	:global(:root[data-tema='oscuro'] .mapa .maplibregl-ctrl-icon) {
+		filter: invert(1);
+	}
+	@media (prefers-color-scheme: dark) {
+		:global(:root:not([data-tema='claro']):not([data-tema='oscuro']) .mapa .maplibregl-ctrl-icon) {
+			filter: invert(1);
+		}
+	}
+	:global(.mapa .maplibregl-ctrl-group button:active) {
+		background: var(--surface-3);
+	}
+	:global(.mapa .maplibregl-ctrl-attrib) {
+		background: var(--vidrio);
+		color: var(--muted);
+	}
+	:global(.mapa .maplibregl-ctrl-attrib a) {
+		color: var(--ink-2);
 	}
 </style>

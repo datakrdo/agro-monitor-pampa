@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { clasificar, COLOR, ETIQUETA, ICONO, veredicto, type Clase } from '../clases';
-	import { monitor } from '../estado.svelte';
+	import { clasificar, colores, ETIQUETA, ICONO, veredicto, type Clase } from '../clases';
+	import { monitor, tema } from '../estado.svelte';
 	import { fechaDecada, formatos } from '../formato';
 	import { idioma } from '../i18n';
 	import type { FeatureCollection } from 'geojson';
@@ -203,7 +203,7 @@
 						<ul class="leyenda" aria-label={t.leyenda}>
 							{#each ['mala', 'normal', 'buena', 'pocos'] as k (k)}
 								<li>
-									<span class="muestra" class:hachura={k === 'pocos'} style:background={k === 'pocos' ? undefined : COLOR[k as Clase]}></span>
+									<span class="muestra" class:hachura={k === 'pocos'} style:background={k === 'pocos' ? undefined : colores(tema.oscuro)[k as Clase]}></span>
 									<span aria-hidden="true">{ICONO[k as Clase]}</span>
 									{ETIQUETA[L][k as Clase]}{k === 'mala' || k === 'buena' ? t.mas(f.dec(datos.umbral)) : ''}
 								</li>
@@ -264,7 +264,7 @@
 	}
 	.cultivo {
 		display: flex;
-		border: 1px solid #c9c6bd;
+		border: 1px solid var(--borde-fuerte);
 		border-radius: 8px;
 		overflow: hidden;
 		width: fit-content;
@@ -273,14 +273,14 @@
 		appearance: none;
 		border: 0;
 		padding: 0.5rem 0.9rem;
-		background: #fff;
+		background: var(--surface);
 		color: var(--ink-2);
 		font: 600 0.9rem var(--sans);
 		cursor: pointer;
 	}
 	.cultivo button[aria-pressed='true'] {
 		background: var(--ink);
-		color: #fff;
+		color: var(--bg);
 	}
 	label {
 		display: grid;
@@ -295,9 +295,9 @@
 	select,
 	input:not([type]) {
 		padding: 0.5rem 0.65rem;
-		border: 1px solid #c9c6bd;
+		border: 1px solid var(--borde-fuerte);
 		border-radius: 8px;
-		background: #fff;
+		background: var(--surface);
 		color: var(--ink);
 		min-width: 0;
 	}
@@ -371,10 +371,10 @@
 		width: 14px;
 		height: 14px;
 		border-radius: 3px;
-		border: 1px solid rgb(0 0 0 / 0.15);
+		border: 1px solid var(--borde-fuerte);
 	}
 	.hachura {
-		background: repeating-linear-gradient(135deg, #ece9e1 0 3px, #8f8a7e 3px 4px);
+		background: repeating-linear-gradient(135deg, var(--surface-3) 0 3px, var(--hachura) 3px 4px);
 	}
 	.tabla {
 		margin-top: 1.5rem;
@@ -406,7 +406,7 @@
 	th {
 		position: sticky;
 		top: 0;
-		background: #f3f1ea;
+		background: var(--surface-2);
 	}
 	.enlace {
 		appearance: none;

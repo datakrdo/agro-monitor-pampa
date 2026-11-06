@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { COLOR, ETIQUETA, ICONO, type Clase } from '../clases';
+	import { tema } from '../estado.svelte';
+	import { colores, ETIQUETA, ICONO, type Clase } from '../clases';
 	import { fechaDecada, formatos } from '../formato';
 	import { idioma } from '../i18n';
 	import type { Monitor } from '../datos';
@@ -87,7 +88,7 @@
 			<h3>{datos.deptos[depto]?.n}</h3>
 		</header>
 
-		<div class="veredicto" style:--c={COLOR[k]}>
+		<div class="veredicto" style:--c={colores(tema.oscuro)[k]}>
 			<span class="icono" aria-hidden="true">{ICONO[k]}</span>
 			<div>
 				<strong>{ETIQUETA[L][k]}</strong>
@@ -212,7 +213,7 @@
 		align-items: center;
 		padding: 0.7rem 0.9rem;
 		border-radius: 8px;
-		background: color-mix(in srgb, var(--c) 14%, white);
+		background: color-mix(in srgb, var(--c) 14%, var(--surface));
 		border-left: 4px solid var(--c);
 	}
 	.icono {
@@ -246,7 +247,7 @@
 		order: 3;
 		height: 8px;
 		border-radius: 4px;
-		background: #efede7;
+		background: var(--surface-3);
 		overflow: hidden;
 	}
 	.relleno {
@@ -255,7 +256,7 @@
 		border-radius: 4px;
 	}
 	.base {
-		background: #aeb3ba;
+		background: var(--graf-banda);
 	}
 	.modelo {
 		background: var(--acento);

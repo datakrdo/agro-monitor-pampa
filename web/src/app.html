@@ -4,6 +4,16 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<meta name="color-scheme" content="light dark" />
+		<meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#141613" media="(prefers-color-scheme: dark)" />
+		<script>
+			// Antes del primer pintado: evita el destello del tema equivocado.
+			try {
+				var t = localStorage.getItem('tema');
+				if (t === 'claro' || t === 'oscuro') document.documentElement.dataset.tema = t;
+			} catch (e) {}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

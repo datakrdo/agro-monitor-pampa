@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Plot from '@observablehq/plot';
-	import { fechaDecada, formatos } from '../formato';
+	import { tema } from '../estado.svelte';
+	import { fechaDecada, formatos, token } from '../formato';
 	import { idioma } from '../i18n';
 	import type { Validacion } from '../datos';
 
@@ -35,25 +36,26 @@
 	let host: HTMLDivElement;
 
 	$effect(() => {
+		void tema.oscuro; // redibuja al cambiar de tema
 		const f = formatos(idioma());
 		const t = T[idioma()];
 		const filas = acierto.map((a) => ({ ...a, f: fechaDecada(REF, a.fecha) }));
 		const g = Plot.plot({
 			width: ancho, height: Math.max(300, Math.min(380, ancho * 0.52)), marginLeft: 44, marginRight: ancho > 520 ? 118 : 12, marginTop: 24,
-			style: { background: 'transparent', fontSize: '12px', fontFamily: 'inherit', color: '#646c75', overflow: 'visible' },
+			style: { background: 'transparent', fontSize: '12px', fontFamily: 'inherit', color: token('--muted'), overflow: 'visible' },
 			x: { type: 'utc', label: null, ticks: 'month', tickFormat: (d: Date) => f.mesCorto(d) },
 			y: { domain: [Math.floor(Math.min(0.5, ...acierto.map((a) => a.acierto_sin_umbral)) * 10) / 10, Math.ceil(Math.max(...acierto.map((a) => a.acierto)) * 10) / 10], label: null, grid: true, ticks: 5, tickFormat: (d: number) => `${Math.round(d * 100)}%` },
 			marks: [
-				Plot.ruleY([0.5], { stroke: '#8a9099', strokeDasharray: '4 3' }),
-				Plot.text([{ f: filas[0].f }], { x: 'f', y: 0.5, text: () => t.moneda, dy: 11, textAnchor: 'start', fill: '#646c75' }),
-				Plot.lineY(filas, { x: 'f', y: 'acierto_sin_umbral', stroke: '#8a9099', strokeWidth: 2 }),
-				Plot.lineY(filas, { x: 'f', y: 'acierto', stroke: '#1f5f3a', strokeWidth: 3 }),
-				ancho > 520 ? Plot.text(filas.slice(-1), { x: 'f', y: 'acierto', text: () => t.clara, dx: 8, textAnchor: 'start', fill: '#1f5f3a', fontWeight: 600 }) : null,
-				ancho > 520 ? Plot.text(filas.slice(-1), { x: 'f', y: 'acierto_sin_umbral', text: () => t.todos, dx: 8, dy: 4, textAnchor: 'start', fill: '#646c75' }) : null,
-				Plot.dot(filas.filter((r) => marcas.includes(r.fecha)), { x: 'f', y: 'acierto', r: 5, fill: '#1f5f3a', stroke: '#fff', strokeWidth: 2 }),
-				Plot.text(filas.filter((r) => marcas.includes(r.fecha)), { x: 'f', y: 'acierto', text: (r: { acierto: number }) => f.pct(r.acierto), dy: -14, fontWeight: 700, fill: '#1b1f23' }),
+				Plot.ruleY([0.5], { stroke: token('--graf-banda'), strokeDasharray: '4 3' }),
+				Plot.text([{ f: filas[0].f }], { x: 'f', y: 0.5, text: () => t.moneda, dy: 11, textAnchor: 'start', fill: token('--muted') }),
+				Plot.lineY(filas, { x: 'f', y: 'acierto_sin_umbral', stroke: token('--graf-banda'), strokeWidth: 2 }),
+				Plot.lineY(filas, { x: 'f', y: 'acierto', stroke: token('--acento'), strokeWidth: 3 }),
+				ancho > 520 ? Plot.text(filas.slice(-1), { x: 'f', y: 'acierto', text: () => t.clara, dx: 8, textAnchor: 'start', fill: token('--acento'), fontWeight: 600 }) : null,
+				ancho > 520 ? Plot.text(filas.slice(-1), { x: 'f', y: 'acierto_sin_umbral', text: () => t.todos, dx: 8, dy: 4, textAnchor: 'start', fill: token('--muted') }) : null,
+				Plot.dot(filas.filter((r) => marcas.includes(r.fecha)), { x: 'f', y: 'acierto', r: 5, fill: token('--acento'), stroke: token('--punto'), strokeWidth: 2 }),
+				Plot.text(filas.filter((r) => marcas.includes(r.fecha)), { x: 'f', y: 'acierto', text: (r: { acierto: number }) => f.pct(r.acierto), dy: -14, fontWeight: 700, fill: token('--ink') }),
 				Plot.tip(filas, Plot.pointerX({
-					x: 'f', y: 'acierto',
+					x: 'f', y: 'acierto', fill: token('--surface'), stroke: token('--borde-fuerte'),
 					title: (r: (typeof filas)[number]) => `${t.al} ${f.fechaLarga(r.f, false)}\n${t.clara}: ${f.pct(r.acierto)}\n${t.todos}: ${f.pct(r.acierto_sin_umbral)}\n${t.casosClara}: ${f.pct(r.marcados)}`
 				}))
 			]
@@ -177,7 +179,7 @@
 
 <style>
 	.alt {
-		background: #f3f1ea;
+		background: var(--surface-2);
 		border-block: 1px solid var(--line);
 	}
 	.cabecera {
